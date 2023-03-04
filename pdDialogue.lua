@@ -117,11 +117,13 @@ function pdDialogue.process(text, width, height, font)
         font = playdate.graphics.getFont()
     end
     -- Split newlines in text
+
     for line in text:gmatch("(.-)\n") do
         table.insert(lines, line)
     end
     local wrapped = pdDialogue.wrap(lines, width, font)
-    return pdDialogue.paginate(wrapped, height, font)
+    local paginated = pdDialogue.paginate(wrapped, height, font)
+    return paginated
 end
 
 function pdDialogue.getRows(height, font)
@@ -142,27 +144,36 @@ function pdDialogue.getRowsf(height, font)
 end
 
 DialogueBox = {}
-class("DialogueBox").extends(playdate.graphics.sprite)
+class("DialogueBox").extends()
 
-function DialogueBox:init(text, width, height, nineSlice)
+function DialogueBox:init(text, width, height, font)
     DialogueBox.super.init(self)
-
-    self.currentPage = 1
-    self.currentIndex = 1  -- Goes from 1 to #self.text[self.currentPage]
-    self.speed = 1 -- char per frame
+    self.padding = 4
+    self.speed = 0.5 -- char per frame
     self.width = width
     self.height = height
-    self.nineSlice = nineSlice
+    self.font = font
+    self.line_complete = false
+    self.done_talking = false
 
     self:setText(text)
-    self:setImage(playdate.graphics.image.new(width, height))
 end
 
 function DialogueBox:setText(text)
-    self.text = pdDialogue.process(text)
-    self.currentPage = 0
-    self.currentIndex = 0
-    self:drawDialogue()
+    self.text = text
+    self.pages = pdDialogue.process(text, self.width, self.height)
+    self.currentPage = 1
+    self.currentChar = 1
+    self.line_complete = false
+    self.done_talking = false
+end
+
+function DialogueBox:setPadding(padding)
+    self.padding = padding
+end
+
+function DialogueBox:setNineSlice(nineSlice)
+    self.nineSlice = nineSlice
 end
 
 function DialogueBox:setSpeed(speed)
@@ -170,27 +181,51 @@ function DialogueBox:setSpeed(speed)
 end
 
 function DialogueBox:finishLine()
-    self.progress = #self.text[self.currentPage]
-    self:drawDialogue()
+    self.currentChar = #self.pages[self.currentPage]
+    self.line_complete = true
+    self.done_talking = self.currentPage == #self.pages
 end
 
-function DialogueBox:advance()
+function DialogueBox:nextPage()
     -- CHeck if last in pages, if it is then close
     self.currentPage += 1
-    self:drawDialogue()
+    self.currentChar = 1
+
+    self.line_complete = false
+    self.done_talking = false
 end
 
-function DialogueBox:drawDialogue()
-    local image = self:getImage()
-    image:clear(playdate.graphics.kColorWhite)
-    playdate.graphics.pushContext(image)
-        -- If ninSlice, draw nineSlice
-        -- Else draw rectangle
-        -- Add text to image using currentPage to pick the page and currentIndex to animate
-    playdate.graphics.popContext()
+function DialogueBox:drawBox(text, x, y, width, height, padding, font, line_complete, nineSlice)
+    local halfPadding = padding // 2
+    if nineSlice ~= nil then
+        nineSlice:drawInRect(x - halfPadding, y - halfPadding, width + padding, height + padding)
+    else
+        playdate.graphics.drawRect(x - halfPadding, y - halfPadding, width + padding, height + padding)
+    end
+
+    playdate.graphics.setFont(font)
+    playdate.graphics.drawText(text, x, y)
+
+    if line_complete then
+        playdate.graphics.drawText("Ⓐ", x + width - 6, y + height - 6)
+    end
+end
+
+function DialogueBox:draw(x, y)
+    local currentText = self.pages[self.currentPage]
+    if not self.line_complete then
+        currentText = currentText:sub(1, math.floor(self.currentChar))
+    end
+    self:drawBox(currentText, x, y, self.width, self.height, self.padding, self.font, self.line_complete, self.nineSlice)
 end
 
 function DialogueBox:update()
-    self.progress += self.speed
-    self:drawDialogue()
+    local pageLength = #self.pages[self.currentPage]
+    self.currentChar += self.speed
+    if self.currentChar > pageLength then
+        self.currentChar = pageLength
+    end
+
+    self.line_complete = self.currentChar == pageLength
+    self.done_talking = self.currentPage == #self.pages
 end
