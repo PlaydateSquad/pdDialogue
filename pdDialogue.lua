@@ -117,7 +117,7 @@ function pdDialogue.process(text, width, height, font)
         font = playdate.graphics.getFont()
     end
     -- Split newlines in text
-    for line in text:gmatch("[^\r\n]+") do
+    for line in text:gmatch("(.-)\n") do
         table.insert(lines, line)
     end
     local wrapped = pdDialogue.wrap(lines, width, font)
