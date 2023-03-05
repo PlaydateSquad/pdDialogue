@@ -116,9 +116,9 @@ function pdDialogue.process(text, width, height, font)
     if font == nil then
         font = playdate.graphics.getFont()
     end
-    -- Split newlines in text
 
-    for line in text:gmatch("(.-)\n") do
+    -- Split newlines in text
+    for line in text:gmatch("([^\n]*)\n?") do
         table.insert(lines, line)
     end
     local wrapped = pdDialogue.wrap(lines, width, font)
@@ -145,6 +145,19 @@ end
 
 DialogueBox = {}
 class("DialogueBox").extends()
+
+function DialogueBox.buttonPrompt(x, y, width, height, padding)
+    playdate.graphics.drawText("Ⓐ", x + width + padding / 2 - 18, y + height + padding / 2 - 18)
+end
+
+function DialogueBox.arrowPrompt(x, y, width, height, padding)
+    playdate.graphics.setColor(playdate.graphics.kColorBlack)
+    playdate.graphics.fillTriangle(
+        x + width + padding / 2 - 18, y + height + padding / 2 - 14,
+        x + width + padding / 2 - 9, y + height + padding / 2 + 2,
+        x + width + padding / 2, y + height + padding / 2 - 14
+    )
+end
 
 function DialogueBox:init(text, width, height, font)
     DialogueBox.super.init(self)
@@ -187,28 +200,34 @@ function DialogueBox:finishLine()
 end
 
 function DialogueBox:nextPage()
-    -- CHeck if last in pages, if it is then close
-    self.currentPage += 1
-    self.currentChar = 1
+    if self.currentPage + 1 <= #self.pages then
+        self.currentPage += 1
+        self.currentChar = 1
 
-    self.line_complete = false
-    self.done_talking = false
+        self.line_complete = false
+        self.done_talking = false
+    end
 end
 
-function DialogueBox:drawBox(text, x, y, width, height, padding, font, line_complete, nineSlice)
+function DialogueBox:drawBackground(x, y, width, height, padding, nineSlice)
     local halfPadding = padding // 2
     if nineSlice ~= nil then
         nineSlice:drawInRect(x - halfPadding, y - halfPadding, width + padding, height + padding)
     else
+        playdate.graphics.setColor(playdate.graphics.kColorWhite)
+        playdate.graphics.fillRect(x - halfPadding, y - halfPadding, width + padding, height + padding)
+        playdate.graphics.setColor(playdate.graphics.kColorBlack)
         playdate.graphics.drawRect(x - halfPadding, y - halfPadding, width + padding, height + padding)
     end
+end
 
+function DialogueBox:drawText(text, x, y, font)
     playdate.graphics.setFont(font)
     playdate.graphics.drawText(text, x, y)
+end
 
-    if line_complete then
-        playdate.graphics.drawText("Ⓐ", x + width - 6, y + height - 6)
-    end
+function DialogueBox:drawPrompt(x, y, width, height, padding)
+    DialogueBox.buttonPrompt(x, y, width, height, padding)
 end
 
 function DialogueBox:draw(x, y)
@@ -216,7 +235,11 @@ function DialogueBox:draw(x, y)
     if not self.line_complete then
         currentText = currentText:sub(1, math.floor(self.currentChar))
     end
-    self:drawBox(currentText, x, y, self.width, self.height, self.padding, self.font, self.line_complete, self.nineSlice)
+    self:drawBackground(x, y, self.width, self.height, self.padding, self.nineSlice)
+    self:drawText(currentText, x, y, self.font)
+    if self.line_complete then
+        self:drawPrompt(x, y, self.width, self.height, self.padding)
+    end
 end
 
 function DialogueBox:update()
