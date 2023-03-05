@@ -1,11 +1,13 @@
 import "CoreLibs/object"
 import "CoreLibs/graphics"
 import "CoreLibs/sprites"
+import "CoreLibs/nineslice"
 
 import "pdDialogue"
 
 local gfx <const> = playdate.graphics
 
+local sprites = gfx.imagetable.new("kenney-1-bit")
 local text = [[Hey.
 
 Yeah?
@@ -40,10 +42,16 @@ Yeah.]]
 
 local width, height = 390, 40
 local x, y = 5, 190
+
 local dialogue = DialogueBox(text, width, height)
+dialogue:setPadding(8)
+dialogue:setNineSlice(gfx.nineSlice.new("nineslice-kenney-1", 4, 4, 8, 8))
+function dialogue:drawPrompt(x, y, width, height, padding)
+	DialogueBox.arrowPrompt(x, y, width, height, padding)
+end
 
 function playdate.AButtonDown()
-    dialogue:setSpeed(1)
+    dialogue:setSpeed(2)
 	if dialogue.line_complete and not dialogue.done_talking then
 		dialogue:nextPage()
 	end
