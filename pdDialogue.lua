@@ -116,12 +116,14 @@ function pdDialogue.process(text, width, height, font)
     if font == nil then
         font = playdate.graphics.getFont()
     end
+
     -- Split newlines in text
-    for line in text:gmatch("(.-)\n") do
+    for line in text:gmatch("([^\n]*)\n?") do
         table.insert(lines, line)
     end
     local wrapped = pdDialogue.wrap(lines, width, font)
-    return pdDialogue.paginate(wrapped, height, font)
+    local paginated = pdDialogue.paginate(wrapped, height, font)
+    return paginated
 end
 
 function pdDialogue.getRows(height, font)
@@ -142,55 +144,207 @@ function pdDialogue.getRowsf(height, font)
 end
 
 DialogueBox = {}
-class("DialogueBox").extends(playdate.graphics.sprite)
+class("DialogueBox").extends()
 
-function DialogueBox:init(text, width, height, nineSlice)
+function DialogueBox.buttonPrompt(x, y, width, height, padding)
+    playdate.graphics.drawText("Ⓐ", x + width + padding / 2 - 18, y + height + padding / 2 - 18)
+end
+
+function DialogueBox.arrowPrompt(x, y, width, height, padding)
+    playdate.graphics.setColor(playdate.graphics.kColorBlack)
+    playdate.graphics.fillTriangle(
+        x + width + padding / 2 - 18, y + height + padding / 2 - 14,
+        x + width + padding / 2 - 9, y + height + padding / 2 + 2,
+        x + width + padding / 2, y + height + padding / 2 - 14
+    )
+end
+
+function DialogueBox:init(text, width, height, font)
     DialogueBox.super.init(self)
-
-    self.currentPage = 1
-    self.currentIndex = 1  -- Goes from 1 to #self.text[self.currentPage]
-    self.speed = 1 -- char per frame
+    self.padding = 4
+    self.speed = 0.5 -- char per frame
     self.width = width
     self.height = height
-    self.nineSlice = nineSlice
+    self.font = font
+    self.line_complete = false
+    self.dialogue_complete = false
 
     self:setText(text)
-    self:setImage(playdate.graphics.image.new(width, height))
 end
 
 function DialogueBox:setText(text)
-    self.text = pdDialogue.process(text)
-    self.currentPage = 0
-    self.currentIndex = 0
-    self:drawDialogue()
+    self.text = text
+    self.pages = pdDialogue.process(text, self.width, self.height)
+    self:restartDialogue()
+end
+
+function DialogueBox:getText()
+    return self.text
+end
+
+function DialogueBox:setPages(pages)
+    self.pages = pages
+    self:restartDialogue()
+end
+
+function DialogueBox:getPages()
+    return self.pages
+end
+
+function DialogueBox:setWidth(width)
+    self.width = width
+    self:setText(self.text)
+end
+
+function DialogueBox:getWidth()
+    return self.width
+end
+
+function DialogueBox:setHeight(height)
+    self.height = height
+    self:setText(self.text)
+end
+
+function DialogueBox:getHeight()
+    return self.height
+end
+
+function DialogueBox:setPadding(padding)
+    self.padding = padding
+end
+
+function DialogueBox:getPadding()
+    return self.padding
+end
+
+function DialogueBox:setNineSlice(nineSlice)
+    self.nineSlice = nineSlice
+end
+
+function DialogueBox:getNineSlice()
+    return self.nineSlice
 end
 
 function DialogueBox:setSpeed(speed)
     self.speed = speed
 end
 
+function DialogueBox:getSpeed()
+    return self.speed
+end
+
+function DialogueBox:restartDialogue()
+    self.currentPage = 1
+    self.currentChar = 1
+    self.line_complete = false
+    self.dialogue_complete = false
+end
+
+function DialogueBox:finishDialogue()
+    self.currentPage = #self.pages
+    self:finishLine()
+end
+
+function DialogueBox:restartLine()
+    self.currentChar = 1
+    self.line_complete = false
+    self.dialogue_complete = false
+end
+
 function DialogueBox:finishLine()
-    self.progress = #self.text[self.currentPage]
-    self:drawDialogue()
+    self.currentChar = #self.pages[self.currentPage]
+    self.line_complete = true
+    self.dialogue_complete = self.currentPage == #self.pages
 end
 
-function DialogueBox:advance()
-    -- CHeck if last in pages, if it is then close
-    self.currentPage += 1
-    self:drawDialogue()
+function DialogueBox:previousPage()
+    if self.currentPage - 1 >= 1 then
+        self.currentPage -= 1
+        self:restartLine()
+    end
 end
 
-function DialogueBox:drawDialogue()
-    local image = self:getImage()
-    image:clear(playdate.graphics.kColorWhite)
-    playdate.graphics.pushContext(image)
-        -- If ninSlice, draw nineSlice
-        -- Else draw rectangle
-        -- Add text to image using currentPage to pick the page and currentIndex to animate
-    playdate.graphics.popContext()
+function DialogueBox:nextPage()
+    if self.currentPage + 1 <= #self.pages then
+        self.currentPage += 1
+        self:restartLine()
+    end
+end
+
+function DialogueBox:drawBackground(x, y)
+
+    local halfPadding = self.padding // 2
+    if self.nineSlice ~= nil then
+        self.nineSlice:drawInRect(
+            x - halfPadding,
+            y - halfPadding,
+            self.width + self.padding,
+            self.height + self.padding)
+    else
+        playdate.graphics.setColor(playdate.graphics.kColorWhite)
+        playdate.graphics.fillRect(
+            x - halfPadding,
+            y - halfPadding,
+            self.width + self.padding,
+            self.height + self.padding
+        )
+        playdate.graphics.setColor(playdate.graphics.kColorBlack)
+        playdate.graphics.drawRect(
+            x - halfPadding,
+            y - halfPadding,
+            self.width + self.padding,
+            self.height + self.padding
+        )
+    end
+end
+
+function DialogueBox:drawText(x, y, text)
+    if self.font ~= nil then
+        playdate.graphics.setFont(self.font)
+    end
+    playdate.graphics.drawText(text, x, y)
+end
+
+function DialogueBox:drawPrompt(x, y)
+    DialogueBox.buttonPrompt(x, y, self.width, self.height, self.padding)
+end
+
+function DialogueBox:draw(x, y)
+    local currentText = self.pages[self.currentPage]
+    if not self.line_complete then
+        currentText = currentText:sub(1, math.floor(self.currentChar))
+    end
+    self:drawBackground(x, y)
+    self:drawText(x, y, currentText)
+    if self.line_complete then
+        self:drawPrompt(x, y)
+    end
+end
+
+function DialogueBox:onPageComplete()
+    -- Override by user
+end
+
+function DialogueBox:onDialogueComplete()
+    -- Override by user
 end
 
 function DialogueBox:update()
-    self.progress += self.speed
-    self:drawDialogue()
+    local pageLength = #self.pages[self.currentPage]
+    self.currentChar += self.speed
+    if self.currentChar > pageLength then
+        self.currentChar = pageLength
+    end
+
+    local previous_line_complete = self.line_complete
+    local previous_dialogue_complete = self.dialogue_complete
+    self.line_complete = self.currentChar == pageLength
+    self.dialogue_complete = self.currentPage == #self.pages
+
+    if previous_line_complete ~= self.line_complete then
+        self:onPageComplete()
+    end
+    if previous_dialogue_complete ~= self.dialogue_complete then
+        self:onDialogueComplete()
+    end
 end
