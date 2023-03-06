@@ -167,7 +167,7 @@ function DialogueBox:init(text, width, height, font)
     self.height = height
     self.font = font
     self.line_complete = false
-    self.done_talking = false
+    self.dialogue_complete = false
 
     self:setText(text)
 end
@@ -175,59 +175,138 @@ end
 function DialogueBox:setText(text)
     self.text = text
     self.pages = pdDialogue.process(text, self.width, self.height)
-    self.currentPage = 1
-    self.currentChar = 1
-    self.line_complete = false
-    self.done_talking = false
+    self:restartDialogue()
+end
+
+function DialogueBox:getText()
+    return self.text
+end
+
+function DialogueBox:setPages(pages)
+    self.pages = pages
+    self:restartDialogue()
+end
+
+function DialogueBox:getPages()
+    return self.pages
+end
+
+function DialogueBox:setWidth(width)
+    self.width = width
+    self:setText(self.text)
+end
+
+function DialogueBox:getWidth()
+    return self.width
+end
+
+function DialogueBox:setHeight(height)
+    self.height = height
+    self:setText(self.text)
+end
+
+function DialogueBox:getHeight()
+    return self.height
 end
 
 function DialogueBox:setPadding(padding)
     self.padding = padding
 end
 
+function DialogueBox:getPadding()
+    return self.padding
+end
+
 function DialogueBox:setNineSlice(nineSlice)
     self.nineSlice = nineSlice
+end
+
+function DialogueBox:getNineSlice()
+    return self.nineSlice
 end
 
 function DialogueBox:setSpeed(speed)
     self.speed = speed
 end
 
+function DialogueBox:getSpeed()
+    return self.speed
+end
+
+function DialogueBox:restartDialogue()
+    self.currentPage = 1
+    self.currentChar = 1
+    self.line_complete = false
+    self.dialogue_complete = false
+end
+
+function DialogueBox:finishDialogue()
+    self.currentPage = #self.pages
+    self:finishLine()
+end
+
+function DialogueBox:restartLine()
+    self.currentChar = 1
+    self.line_complete = false
+    self.dialogue_complete = false
+end
+
 function DialogueBox:finishLine()
     self.currentChar = #self.pages[self.currentPage]
     self.line_complete = true
-    self.done_talking = self.currentPage == #self.pages
+    self.dialogue_complete = self.currentPage == #self.pages
+end
+
+function DialogueBox:previousPage()
+    if self.currentPage - 1 >= 1 then
+        self.currentPage -= 1
+        self:restartLine()
+    end
 end
 
 function DialogueBox:nextPage()
     if self.currentPage + 1 <= #self.pages then
         self.currentPage += 1
-        self.currentChar = 1
-
-        self.line_complete = false
-        self.done_talking = false
+        self:restartLine()
     end
 end
 
-function DialogueBox:drawBackground(x, y, width, height, padding, nineSlice)
-    local halfPadding = padding // 2
-    if nineSlice ~= nil then
-        nineSlice:drawInRect(x - halfPadding, y - halfPadding, width + padding, height + padding)
+function DialogueBox:drawBackground(x, y)
+
+    local halfPadding = self.padding // 2
+    if self.nineSlice ~= nil then
+        self.nineSlice:drawInRect(
+            x - halfPadding,
+            y - halfPadding,
+            self.width + self.padding,
+            self.height + self.padding)
     else
         playdate.graphics.setColor(playdate.graphics.kColorWhite)
-        playdate.graphics.fillRect(x - halfPadding, y - halfPadding, width + padding, height + padding)
+        playdate.graphics.fillRect(
+            x - halfPadding,
+            y - halfPadding,
+            self.width + self.padding,
+            self.height + self.padding
+        )
         playdate.graphics.setColor(playdate.graphics.kColorBlack)
-        playdate.graphics.drawRect(x - halfPadding, y - halfPadding, width + padding, height + padding)
+        playdate.graphics.drawRect(
+            x - halfPadding,
+            y - halfPadding,
+            self.width + self.padding,
+            self.height + self.padding
+        )
     end
 end
 
-function DialogueBox:drawText(text, x, y, font)
-    playdate.graphics.setFont(font)
+function DialogueBox:drawText(x, y, text)
+    if self.font ~= nil then
+        playdate.graphics.setFont(self.font)
+    end
     playdate.graphics.drawText(text, x, y)
 end
 
-function DialogueBox:drawPrompt(x, y, width, height, padding)
-    DialogueBox.buttonPrompt(x, y, width, height, padding)
+function DialogueBox:drawPrompt(x, y)
+    DialogueBox.buttonPrompt(x, y, self.width, self.height, self.padding)
 end
 
 function DialogueBox:draw(x, y)
@@ -235,10 +314,10 @@ function DialogueBox:draw(x, y)
     if not self.line_complete then
         currentText = currentText:sub(1, math.floor(self.currentChar))
     end
-    self:drawBackground(x, y, self.width, self.height, self.padding, self.nineSlice)
-    self:drawText(currentText, x, y, self.font)
+    self:drawBackground(x, y)
+    self:drawText(x, y, currentText)
     if self.line_complete then
-        self:drawPrompt(x, y, self.width, self.height, self.padding)
+        self:drawPrompt(x, y)
     end
 end
 
@@ -250,5 +329,5 @@ function DialogueBox:update()
     end
 
     self.line_complete = self.currentChar == pageLength
-    self.done_talking = self.currentPage == #self.pages
+    self.dialogue_complete = self.currentPage == #self.pages
 end
