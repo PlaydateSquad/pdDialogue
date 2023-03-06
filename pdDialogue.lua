@@ -321,6 +321,14 @@ function DialogueBox:draw(x, y)
     end
 end
 
+function DialogueBox:onPageComplete()
+    -- Override by user
+end
+
+function DialogueBox:onDialogueComplete()
+    -- Override by user
+end
+
 function DialogueBox:update()
     local pageLength = #self.pages[self.currentPage]
     self.currentChar += self.speed
@@ -328,6 +336,15 @@ function DialogueBox:update()
         self.currentChar = pageLength
     end
 
+    local previous_line_complete = self.line_complete
+    local previous_dialogue_complete = self.dialogue_complete
     self.line_complete = self.currentChar == pageLength
     self.dialogue_complete = self.currentPage == #self.pages
+
+    if previous_line_complete ~= self.line_complete then
+        self:onPageComplete()
+    end
+    if previous_dialogue_complete ~= self.dialogue_complete then
+        self:onDialogueComplete()
+    end
 end
