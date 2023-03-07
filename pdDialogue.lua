@@ -174,7 +174,7 @@ end
 
 function DialogueBox:setText(text)
     self.text = text
-    self.pages = pdDialogue.process(text, self.width, self.height)
+    self.pages = pdDialogue.process(text, self.width - self.padding, self.height - self.padding, self.font)
     self:restartDialogue()
 end
 
@@ -215,6 +215,14 @@ end
 
 function DialogueBox:getPadding()
     return self.padding
+end
+
+function DialogueBox:setFont(font)
+    self.font = font
+end
+
+function DialogueBox:getFont()
+    return self.font
 end
 
 function DialogueBox:setNineSlice(nineSlice)
@@ -300,9 +308,10 @@ end
 
 function DialogueBox:drawText(x, y, text)
     if self.font ~= nil then
-        playdate.graphics.setFont(self.font)
+        self.font:drawText(text, x, y)
+    else
+        playdate.graphics.drawText(text, x, y)
     end
-    playdate.graphics.drawText(text, x, y)
 end
 
 function DialogueBox:drawPrompt(x, y)
