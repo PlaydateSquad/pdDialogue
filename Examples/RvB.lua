@@ -7,7 +7,6 @@ import "pdDialogue"
 
 local gfx <const> = playdate.graphics
 
-local sprites = gfx.imagetable.new("kenney-1-bit")
 local text = [[Hey.
 
 Yeah?
@@ -40,14 +39,13 @@ You sure?
 
 Yeah.]]
 
-local width, height = 390, 40
-local x, y = 5, 190
 
-local dialogue = DialogueBox(text, width, height)
-dialogue:setPadding(8)
+local width, height, padding = 390, 48, 8
+local x, y = 5, 186
+local dialogue = DialogueBox(text, width, height, padding)
 dialogue:setNineSlice(gfx.nineSlice.new("nineslice-kenney-1", 4, 4, 8, 8))
-function dialogue:drawPrompt(x, y, width, height, padding)
-	DialogueBox.arrowPrompt(x, y, width, height, padding)
+function dialogue:drawPrompt(x, y)
+    DialogueBox.arrowPrompt(x + self.width - 12, y + self.height - 6)
 end
 
 function playdate.AButtonDown()
