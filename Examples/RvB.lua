@@ -47,32 +47,7 @@ dialogue:setNineSlice(gfx.nineSlice.new("nineslice-kenney-1", 4, 4, 8, 8))
 function dialogue:drawPrompt(x, y)
     DialogueBox.arrowPrompt(x + self.width - 12, y + self.height - 6)
 end
-
-function playdate.AButtonDown()
-    dialogue:setSpeed(2)
-	if dialogue.line_complete and not dialogue.done_talking then
-		dialogue:nextPage()
-	end
-end
-
-function playdate.AButtonUp()
-	dialogue:setSpeed(0.5)
-end
-
-function playdate.BButtonDown()
-	if dialogue.line_complete then
-        if not dialogue.done_talking then
-			dialogue:nextPage()
-			dialogue:finishLine()
-		end
-	else
-		dialogue:finishLine()
-	end
-end
-
-function playdate.BButtonUp()
-	dialogue:setSpeed(0.5)
-end
+dialogue:enable()
 
 function playdate.update()
 	gfx.clear(gfx.kColorWhite)

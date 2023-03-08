@@ -172,6 +172,51 @@ function DialogueBox:init(text, width, height, padding, font)
     self:setText(text)
 end
 
+function DialogueBox:getInputHandlers()
+    return {
+        AButtonDown = function()
+            self:setSpeed(2)
+            if self.dialogue_complete then
+                self:disable()
+                self:onClose()
+            elseif self.line_complete then
+                self:nextPage()
+            end
+        end,
+        AButtonUp = function()
+            self:setSpeed(0.5)
+        end,
+        BButtonDown = function()
+            if self.line_complete then
+                if self.dialogue_complete then
+                    self:disable()
+                    self:onClose()
+                else
+                    self:nextPage()
+                    self:finishLine()
+                end
+            else
+                self:finishLine()
+            end
+        end,
+        BButtonUp = function()
+            self:setSpeed(0.5)
+        end
+    }
+end
+
+function DialogueBox:enable()
+    self.enabled = true
+    playdate.inputHandlers.push(self:getInputHandlers(), false)
+end
+
+function DialogueBox:disable()
+    if self.enabled then
+        self.enabled = false
+        playdate.inputHandlers.pop()
+    end
+end
+
 function DialogueBox:setText(text)
     self.text = text
     self.pages = pdDialogue.process(text, self.width - self.padding, self.height - self.padding, self.font)
@@ -304,6 +349,10 @@ function DialogueBox:drawPrompt(x, y)
 end
 
 function DialogueBox:draw(x, y)
+    if not self.enabled then
+        return
+    end
+
     local currentText = self.pages[self.currentPage]
     if not self.line_complete then
         currentText = currentText:sub(1, math.floor(self.currentChar))
@@ -323,7 +372,15 @@ function DialogueBox:onDialogueComplete()
     -- Override by user
 end
 
+function DialogueBox:onClose()
+    -- Override by user
+end
+
 function DialogueBox:update()
+    if not self.enabled then
+        return
+    end
+
     local pageLength = #self.pages[self.currentPage]
     self.currentChar += self.speed
     if self.currentChar > pageLength then
@@ -333,7 +390,7 @@ function DialogueBox:update()
     local previous_line_complete = self.line_complete
     local previous_dialogue_complete = self.dialogue_complete
     self.line_complete = self.currentChar == pageLength
-    self.dialogue_complete = self.currentPage == #self.pages
+    self.dialogue_complete = self.line_complete and self.currentPage == #self.pages
 
     if previous_line_complete ~= self.line_complete then
         self:onPageComplete()
