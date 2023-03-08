@@ -170,7 +170,6 @@ function DialogueBox:init(text, width, height, padding, font)
     self.dialogue_complete = false
 
     self:setText(text)
-    self:enable()
 end
 
 function DialogueBox:getInputHandlers()
@@ -208,10 +207,14 @@ end
 
 function DialogueBox:enable()
     self.enabled = true
+    playdate.inputHandlers.push(self:getInputHandlers(), false)
 end
 
 function DialogueBox:disable()
-    self.enabled = false
+    if self.enabled then
+        self.enabled = false
+        playdate.inputHandlers.pop()
+    end
 end
 
 function DialogueBox:setText(text)
