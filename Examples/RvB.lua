@@ -47,11 +47,8 @@ dialogue:setNineSlice(gfx.nineSlice.new("nineslice-kenney-1", 4, 4, 8, 8))
 function dialogue:drawPrompt(x, y)
     DialogueBox.arrowPrompt(x + self.width - 12, y + self.height - 6)
 end
+dialogue:enable()
 
-playdate.inputHandlers.push(dialogue:getInputHandlers(), false)
-function dialogue:onClose()
-    playdate.inputHandlers.pop()
-end
 function playdate.update()
 	gfx.clear(gfx.kColorWhite)
     dialogue:update()
