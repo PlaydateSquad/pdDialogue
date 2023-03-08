@@ -160,16 +160,24 @@ function DialogueBox.arrowPrompt(x, y, color)
 end
 
 function DialogueBox:init(text, width, height, padding, font)
+    -- text: optional string of text to process
+    -- width: width of dialogue box (in pixels)
+    -- height: height of dialogue box (in pixels)
+    -- padding: internal padding of dialogue box (in pixels)
+    -- font: font to use for drawing text
     DialogueBox.super.init(self)
     self.speed = 0.5 -- char per frame
     self.padding = padding or 0
     self.width = width
     self.height = height
     self.font = font
+    self.enabled = false
     self.line_complete = false
     self.dialogue_complete = false
 
-    self:setText(text)
+    if text ~= nil then
+        self:setText(text)
+    end
 end
 
 function DialogueBox:getInputHandlers()
