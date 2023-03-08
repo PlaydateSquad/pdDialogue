@@ -48,7 +48,7 @@ function dialogue:drawPrompt(x, y)
     DialogueBox.arrowPrompt(x + self.width - 12, y + self.height - 6)
 end
 
-playdate.inputHandlers.push(dialogue:getInputHandlers())
+playdate.inputHandlers.push(dialogue:getInputHandlers(), false)
 function dialogue:onClose()
     playdate.inputHandlers.pop()
 end
