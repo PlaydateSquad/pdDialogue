@@ -1,7 +1,5 @@
 import "CoreLibs/object"
 import "CoreLibs/graphics"
-import "CoreLibs/sprites"
-import "CoreLibs/nineslice"
 
 import "pdDialogue"
 
@@ -39,14 +37,9 @@ You sure?
 
 Yeah.]]
 
-
 local width, height, padding = 390, 48, 8
 local x, y = 5, 186
 local dialogue = DialogueBox(text, width, height, padding)
-dialogue:setNineSlice(gfx.nineSlice.new("nineslice-kenney-1", 4, 4, 8, 8))
-function dialogue:drawPrompt(x, y)
-    DialogueBox.arrowPrompt(x + self.width - 12, y + self.height - 6)
-end
 dialogue:enable()
 
 function playdate.update()
