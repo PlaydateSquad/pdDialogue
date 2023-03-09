@@ -2,7 +2,7 @@
 
 a Playdate dialogue system
 
-![Alt text](assets/demo.gif)
+![Alt text](demo.gif)
 
 ## Getting Started
 
@@ -23,4 +23,4 @@ end
 
 Check out the [wiki](https://github.com/PizzaFuel/pdDialogue/wiki) for more in-depth documentation :)
 
-Example image assets are from [Kenney's 1-Bit Pack](https://www.kenney.nl/assets/bit-pack) and the demo fonts are included in the [Playdate SDK](https://play.date/dev/)!
+Example image assets are from [Kenney's 1-Bit Pack](https://www.kenney.nl/Examples/assets/bit-pack) and the demo fonts are included in the [Playdate SDK](https://play.date/dev/)!
