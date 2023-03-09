@@ -147,7 +147,8 @@ DialogueBox = {}
 class("DialogueBox").extends()
 
 function DialogueBox.buttonPrompt(x, y)
-    playdate.graphics.drawText("Ⓐ", x, y)
+    playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillBlack)
+    playdate.graphics.getSystemFont():drawText("Ⓐ", x, y)
 end
 
 function DialogueBox.arrowPrompt(x, y, color)
@@ -215,7 +216,7 @@ end
 
 function DialogueBox:enable()
     self.enabled = true
-    playdate.inputHandlers.push(self:getInputHandlers(), false)
+    playdate.inputHandlers.push(self:getInputHandlers(), true)
 end
 
 function DialogueBox:disable()
@@ -246,7 +247,9 @@ end
 
 function DialogueBox:setWidth(width)
     self.width = width
-    self:setText(self.text)
+    if self.text ~= nil then
+        self:setText(self.text)
+    end
 end
 
 function DialogueBox:getWidth()
@@ -255,7 +258,9 @@ end
 
 function DialogueBox:setHeight(height)
     self.height = height
-    self:setText(self.text)
+    if self.text ~= nil then
+        self:setText(self.text)
+    end
 end
 
 function DialogueBox:getHeight()
@@ -345,6 +350,7 @@ function DialogueBox:drawBackground(x, y)
 end
 
 function DialogueBox:drawText(x, y, text)
+    playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillBlack)
     if self.font ~= nil then
         self.font:drawText(text, x, y)
     else
@@ -405,5 +411,158 @@ function DialogueBox:update()
     end
     if previous_dialogue_complete ~= self.dialogue_complete then
         self:onDialogueComplete()
+    end
+end
+
+local dialogue_x, dialogue_y = 5, 186
+local dialogue = DialogueBox(nil, 390, 48, 8)
+local callbacks = {}
+local say_default, say_nils
+local key_value_map = {
+    width={
+        set=function(value) dialogue:setWidth(value) end,
+        get=function() return dialogue:getWidth() end
+    },
+    height={
+        set=function(value) dialogue:setHeight(value) end,
+        get=function() return dialogue:getHeight() end
+    },
+    x={
+        set=function(value) dialogue_x = value end,
+        get=function() return dialogue_x end
+    },
+    y={
+        set=function(value) dialogue_y = value end,
+        get=function() return dialogue_y end
+    },
+    padding={
+        set=function(value) dialogue:setPadding(value) end,
+        get=function() return dialogue:getPadding() end
+    },
+    font={
+        set=function(value) dialogue:setFont(value) end,
+        get=function() return dialogue:getFont() end
+    },
+    fontFamily={
+        set=function(value) dialogue.fontFamily = value end,
+        get=function() return dialogue.fontFamily end
+    },
+    nineSlice={
+        set=function(value) dialogue:setNineSlice(value) end,
+        get=function() return dialogue:getNineSlice() end
+    },
+    speed={
+        set=function(value) dialogue:setSpeed(value) end,
+        get=function() return dialogue:getSpeed() end
+    },
+    drawBackground={
+        set=function(func) callbacks["drawBackground"] = func end,
+        get=function() return callbacks["drawBackground"] end
+    },
+    drawText={
+        set=function(func) callbacks["drawText"] = func end,
+        get=function() return callbacks["drawText"] end
+    },
+    drawPrompt={
+        set=function(func) callbacks["drawPrompt"] = func end,
+        get=function() return callbacks["drawPrompt"] end
+    },
+    onPageComplete={
+        set=function(func) callbacks["onPageComplete"] = func end,
+        get=function() return callbacks["onPageComplete"] end
+    },
+    onDialogueComplete={
+        set=function(func) callbacks["onDialogueComplete"] = func end,
+        get=function() return callbacks["onDialogueComplete"] end
+    },
+    onClose={
+        set=function(func) callbacks["onClose"] = func end,
+        get=function() return callbacks["onClose"] end
+    }
+}
+function dialogue:drawBackground(x, y)
+    if callbacks["drawBackground"] ~= nil then
+        callbacks["drawBackground"](dialogue, x, y)
+    else
+        dialogue.super.drawBackground(self, x, y)
+    end
+end
+function dialogue:drawText(x, y ,text)
+    if callbacks["drawText"] ~= nil then
+        callbacks["drawText"](dialogue, x, y, text)
+    else
+        dialogue.super.drawText(self, x, y, text)
+    end
+end
+function dialogue:drawPrompt(x, y)
+    if callbacks["drawPrompt"] ~= nil then
+        callbacks["drawPrompt"](dialogue, x, y)
+    else
+        dialogue.super.drawPrompt(self, x, y)
+    end
+end
+function dialogue:onPageComplete()
+    if callbacks["onPageComplete"] ~= nil then
+        callbacks["onPageComplete"]()
+    end
+end
+function dialogue:onDialogueComplete()
+    if callbacks["onDialogueComplete"] ~= nil then
+        callbacks["onDialogueComplete"]()
+    end
+end
+function dialogue:onClose()
+    if say_default ~= nil then
+        pdDialogue.setup(say_default)
+        say_default = nil
+    end
+    if say_nils ~= nil then
+        for _, key in ipairs(say_nils) do
+            pdDialogue.set(key, nil)
+        end
+        say_nils = nil
+    end
+
+    if callbacks["onClose"] ~= nil then
+        callbacks["onClose"]()
+    end
+end
+
+function pdDialogue.set(key, value)
+    if key_value_map[key] ~= nil then
+        local backup = key_value_map[key].get()
+        key_value_map[key].set(value)
+        return backup
+    end
+    return nil
+end
+
+function pdDialogue.setup(config)
+    local backup = {}
+    local nils = {}
+    for key, value in pairs(config) do
+        local backup_value = pdDialogue.set(key, value)
+        if backup_value ~= nil then
+            backup[key] = backup_value
+        else
+            table.insert(nils, key)
+        end
+    end
+    return backup, nils
+end
+
+function pdDialogue.say(text, config)
+    if config ~= nil then
+        say_default, say_nils = pdDialogue.setup(config)
+    end
+    dialogue:setText(text)
+    dialogue:enable()
+    return dialogue
+end
+
+function pdDialogue.update()
+    if dialogue.enabled then
+        dialogue:update()
+        dialogue:draw(dialogue_x, dialogue_y)
     end
 end
