@@ -33,7 +33,6 @@ local sasser_slab_family = gfx.font.newFamily({
     [playdate.graphics.font.kVariantBold] = "Examples/assets/fonts/Sasser Slab/Sasser-Slab-Bold",
     [playdate.graphics.font.kVariantItalic] = "Examples/assets/fonts/Sasser Slab/Sasser-Slab-Italic"
 })
-local pedallica = gfx.font.new("Examples/assets/fonts/Pedallica/font-pedallica-fun-16")
 
 local nineslice_1 = gfx.nineSlice.new("Examples/assets/nineslice-kenney-1", 4, 4, 8, 8)
 local nineslice_2 = gfx.nineSlice.new("Examples/assets/nineslice-kenney-2", 6, 6, 4, 4)
@@ -49,10 +48,7 @@ pdDialogue.setup({
 playdate.inputHandlers.push({
     upButtonUp = function()
         directionText = "⬆️"
-        pdDialogue.say([[Hello, and thank you for checking out pdDialogue!
-
-I am a default styled sign
-:)]])
+        pdDialogue.say("Hello! I'm currently talking to you through the pdDialogue library! I am a default styled sign :)")
     end,
     rightButtonUp = function()
         directionText = "➡️"
@@ -71,37 +67,42 @@ He's annoying.]], {
                 playdate.graphics.setColor(playdate.graphics.kColorBlack)
                 playdate.graphics.fillRect(x, y, dialogue.width, dialogue.height)
             end,
-            drawPrompt=function() end
+            drawPrompt=function(dialogue, x, y)
+                DialogueBox.arrowPrompt(x + dialogue.width - 12, y + dialogue.height - 10, gfx.kColorWhite)
+            end
         })
     end,
     downButtonUp = function()
         directionText = "⬇️"
-        if switch:getImageFlip() == gfx.kImageUnflipped then
-            switch:setImageFlip(gfx.kImageFlippedX)
-        else
-            switch:setImageFlip(gfx.kImageUnflipped)
-        end
-        pdDialogue.say("You flipped the switch!", {
+        switch:setImageFlip(gfx.kImageFlippedX)
+        pdDialogue.say("You flipped the switch.", {
             width=134,
             height=24,
             x=130,
             font = oklahoma,
             nineSlice=nineslice_1,
-            drawPrompt=function() end
+            drawPrompt=function() end,
+            onClose=function()
+                directionText = "✛"
+                switch:setImageFlip(gfx.kImageUnflipped)
+                pdDialogue.say(". . . But it flipped back!", {
+                    width=134,
+                    height=24,
+                    x=130,
+                    font = oklahoma,
+                    nineSlice=nineslice_1,
+                    drawPrompt=function() end
+                })
+            end
         })
     end,
     leftButtonUp = function()
         directionText = "⬅️"
         pdDialogue.say([[What did the wizard order at the hotel?
 
-*Broom* service!
-_Nyuck_ _nyuck_ _nyuck_]], {
-            font=pedallica,
-            nineSlice=nineslice_2,
-            drawText=function(_, x, y, text)
-                playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillBlack)
-                playdate.graphics.drawText(text, x, y, sasser_slab_family)
-            end,
+*Broom* service! _Nyuck_ _nyuck_ _nyuck_]], {
+            font=sasser_slab_family,
+            nineSlice=nineslice_2
         })
     end,
 })
