@@ -227,8 +227,14 @@ function DialogueBox:disable()
 end
 
 function DialogueBox:setText(text)
+    local font = self.font
+    if font ~= nil then
+        if type(font) == "table" then
+            font = font[playdate.graphics.font.kVariantNormal]
+        end
+    end
     self.text = text
-    self.pages = pdDialogue.process(text, self.width - self.padding, self.height - self.padding, self.font)
+    self.pages = pdDialogue.process(text, self.width - self.padding, self.height - self.padding, font)
     self:restartDialogue()
 end
 
@@ -352,7 +358,13 @@ end
 function DialogueBox:drawText(x, y, text)
     playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillBlack)
     if self.font ~= nil then
-        self.font:drawText(text, x, y)
+        if type(self.font) == "table" then
+            -- Draw with font family
+            playdate.graphics.drawText(text, x, y, self.font)
+        else
+            -- Draw using font
+            self.font:drawText(text, x, y)
+        end
     else
         playdate.graphics.drawText(text, x, y)
     end
@@ -512,6 +524,7 @@ function dialogue:onDialogueComplete()
     end
 end
 function dialogue:onClose()
+    local current = callbacks["onClose"]
     if say_default ~= nil then
         pdDialogue.setup(say_default)
         say_default = nil
@@ -523,8 +536,8 @@ function dialogue:onClose()
         say_nils = nil
     end
 
-    if callbacks["onClose"] ~= nil then
-        callbacks["onClose"]()
+    if current ~= nil then
+        current()
     end
 end
 
