@@ -8,34 +8,34 @@ import "pdDialogue"
 local gfx <const> = playdate.graphics
 
 local directionText = "✛"
-local sign = gfx.sprite.new(gfx.image.new("Examples/assets/sign"))
+local sign = gfx.sprite.new(gfx.image.new("assets/sign"))
 sign:setScale(2)
 sign:moveTo(200, 100)
 sign:add()
-local thief = gfx.sprite.new(gfx.image.new("Examples/assets/thief"))
+local thief = gfx.sprite.new(gfx.image.new("assets/thief"))
 thief:setScale(2)
 thief:moveTo(230, 130)
 thief:add()
-local switch = gfx.sprite.new(gfx.image.new("Examples/assets/switch"))
+local switch = gfx.sprite.new(gfx.image.new("assets/switch"))
 switch:setScale(2)
 switch:moveTo(200, 154)
 switch:add()
-local wizard = gfx.sprite.new(gfx.image.new("Examples/assets/wizard"))
+local wizard = gfx.sprite.new(gfx.image.new("assets/wizard"))
 wizard:setScale(2)
 wizard:moveTo(166, 130)
 wizard:add()
 
-local asheville = gfx.font.new("Examples/assets/fonts/Asheville/Asheville Sans 14 Bold/Asheville-Sans-14-Bold")
-local newsleak = gfx.font.new("Examples/assets/fonts/Newsleak Serif/Newsleak-Serif")
-local oklahoma = gfx.font.new("Examples/assets/fonts/Oklahoma/Oklahoma-Bold")
+local asheville = gfx.font.new("assets/fonts/Asheville/Asheville Sans 14 Bold/Asheville-Sans-14-Bold")
+local newsleak = gfx.font.new("assets/fonts/Newsleak Serif/Newsleak-Serif")
+local oklahoma = gfx.font.new("assets/fonts/Oklahoma/Oklahoma-Bold")
 local sasser_slab_family = gfx.font.newFamily({
-    [playdate.graphics.font.kVariantNormal] = "Examples/assets/fonts/Sasser Slab/Sasser-Slab",
-    [playdate.graphics.font.kVariantBold] = "Examples/assets/fonts/Sasser Slab/Sasser-Slab-Bold",
-    [playdate.graphics.font.kVariantItalic] = "Examples/assets/fonts/Sasser Slab/Sasser-Slab-Italic"
+    [playdate.graphics.font.kVariantNormal] = "assets/fonts/Sasser Slab/Sasser-Slab",
+    [playdate.graphics.font.kVariantBold] = "assets/fonts/Sasser Slab/Sasser-Slab-Bold",
+    [playdate.graphics.font.kVariantItalic] = "assets/fonts/Sasser Slab/Sasser-Slab-Italic"
 })
 
-local nineslice_1 = gfx.nineSlice.new("Examples/assets/nineslice-kenney-1", 4, 4, 8, 8)
-local nineslice_2 = gfx.nineSlice.new("Examples/assets/nineslice-kenney-2", 6, 6, 4, 4)
+local nineslice_1 = gfx.nineSlice.new("assets/nineslice-kenney-1", 4, 4, 8, 8)
+local nineslice_2 = gfx.nineSlice.new("assets/nineslice-kenney-2", 6, 6, 4, 4)
 
 
 pdDialogue.setup({
