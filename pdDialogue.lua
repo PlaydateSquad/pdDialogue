@@ -358,6 +358,7 @@ end
 function DialogueBox:drawText(x, y, text)
     playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillBlack)
     if self.font ~= nil then
+        -- variable will be table if a font family
         if type(self.font) == "table" then
             -- Draw with font family
             playdate.graphics.drawText(text, x, y, self.font)
@@ -524,7 +525,9 @@ function dialogue:onDialogueComplete()
     end
 end
 function dialogue:onClose()
+    -- Make a backup of the current onClose callback
     local current = callbacks["onClose"]
+    -- This will reset all (including the callbacks)
     if say_default ~= nil then
         pdDialogue.setup(say_default)
         say_default = nil
@@ -536,6 +539,7 @@ function dialogue:onClose()
         say_nils = nil
     end
 
+    -- If the current wasn't nil, call it
     if current ~= nil then
         current()
     end
@@ -551,6 +555,7 @@ function pdDialogue.set(key, value)
 end
 
 function pdDialogue.setup(config)
+    -- config: table of key value pairs. Supported keys are in key_value_map
     local backup = {}
     local nils = {}
     for key, value in pairs(config) do
@@ -565,6 +570,8 @@ function pdDialogue.setup(config)
 end
 
 function pdDialogue.say(text, config)
+    -- text: string (can be multiline) to say
+    -- config: optional table, will provide temporary overrides for this one dialogue box
     if config ~= nil then
         say_default, say_nils = pdDialogue.setup(config)
     end
