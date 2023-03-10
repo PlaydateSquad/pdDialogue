@@ -187,7 +187,6 @@ function DialogueBox:getInputHandlers()
             self:setSpeed(2)
             if self.dialogue_complete then
                 self:disable()
-                self:onClose()
             elseif self.line_complete then
                 self:nextPage()
             end
@@ -199,7 +198,6 @@ function DialogueBox:getInputHandlers()
             if self.line_complete then
                 if self.dialogue_complete then
                     self:disable()
-                    self:onClose()
                 else
                     self:nextPage()
                     self:finishLine()
@@ -216,14 +214,12 @@ end
 
 function DialogueBox:enable()
     self.enabled = true
-    playdate.inputHandlers.push(self:getInputHandlers(), true)
+    self:onOpen()
 end
 
 function DialogueBox:disable()
-    if self.enabled then
-        self.enabled = false
-        playdate.inputHandlers.pop()
-    end
+    self.enabled = false
+    self:onClose()
 end
 
 function DialogueBox:setText(text)
@@ -376,10 +372,6 @@ function DialogueBox:drawPrompt(x, y)
 end
 
 function DialogueBox:draw(x, y)
-    if not self.enabled then
-        return
-    end
-
     local currentText = self.pages[self.currentPage]
     if not self.line_complete then
         currentText = currentText:sub(1, math.floor(self.currentChar))
@@ -389,6 +381,10 @@ function DialogueBox:draw(x, y)
     if self.line_complete then
         self:drawPrompt(x, y)
     end
+end
+
+function DialogueBox:onOpen()
+    -- Override by user
 end
 
 function DialogueBox:onPageComplete()
@@ -404,10 +400,6 @@ function DialogueBox:onClose()
 end
 
 function DialogueBox:update()
-    if not self.enabled then
-        return
-    end
-
     local pageLength = #self.pages[self.currentPage]
     self.currentChar += self.speed
     if self.currentChar > pageLength then
@@ -480,6 +472,10 @@ local key_value_map = {
         set=function(func) callbacks["drawPrompt"] = func end,
         get=function() return callbacks["drawPrompt"] end
     },
+    onOpen={
+        set=function(func) callbacks["onOpen"] = func end,
+        get=function() return callbacks["onOpen"] end
+    },
     onPageComplete={
         set=function(func) callbacks["onPageComplete"] = func end,
         get=function() return callbacks["onPageComplete"] end
@@ -514,6 +510,12 @@ function dialogue:drawPrompt(x, y)
         dialogue.super.drawPrompt(self, x, y)
     end
 end
+function dialogue:onOpen()
+    playdate.inputHandlers.push(self:getInputHandlers(), true)
+    if callbacks["onOpen"] ~= nil then
+        callbacks["onOpen"]()
+    end
+end
 function dialogue:onPageComplete()
     if callbacks["onPageComplete"] ~= nil then
         callbacks["onPageComplete"]()
@@ -539,6 +541,7 @@ function dialogue:onClose()
         say_nils = nil
     end
 
+    playdate.inputHandlers.pop()
     -- If the current wasn't nil, call it
     if current ~= nil then
         current()
