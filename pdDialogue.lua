@@ -4,10 +4,8 @@ function pdDialogue.wrap(lines, width, font)
     -- lines: array of strings
     -- width: width to limit text (in pixels)
     -- font: optional, will get current font if not provided
-    if font == nil then
-        font = playdate.graphics.getFont()
-    end
 
+    local _font = pdDialogue.getNormalFont(font)
     local result = {}
     for _, line in ipairs(lines) do
         local currentWidth = 0
@@ -15,13 +13,13 @@ function pdDialogue.wrap(lines, width, font)
         if line == "" then
             -- Insert blank lines without processing
             table.insert(result, line)
-        elseif font:getTextWidth(line) <= width then
+        elseif _font:getTextWidth(line) <= width then
             -- Insert short enough lines without processing
             table.insert(result, line)
         else
             -- Iterate through every word (split by whitespace) in the line
             for word in line:gmatch("%S+") do
-                local wordWidth = font:getTextWidth(word)
+                local wordWidth = _font:getTextWidth(word)
                 if currentWidth == 0 then
                     -- If current line is empty, set to word
                     currentWidth = wordWidth
@@ -29,7 +27,7 @@ function pdDialogue.wrap(lines, width, font)
                 else
                     -- If not, concatonate the strings and get width
                     local newLine = currentLine .. " " .. word
-                    local newWidth = font:getTextWidth(newLine)
+                    local newWidth = _font:getTextWidth(newLine)
                     if newWidth >= width then
                         table.insert(result, currentLine)
                         currentWidth = wordWidth
@@ -54,11 +52,9 @@ function pdDialogue.window(text, start_index, height, font)
     -- start_index: row index to start window
     -- rows: number of rows to render
     local result = {text[start_index]}
-    if font == nil then
-        font = playdate.graphics.getFont()
-    end
+    local _font = pdDialogue.getNormalFont(font)
     -- Subtract one because we start with 1 row
-    local rows = pdDialogue.getRows(height, font) - 1
+    local rows = pdDialogue.getRows(height, _font) - 1
     for index = 1, rows do
         -- Check if index is out of range of the text
         if start_index + index > #text then
@@ -77,10 +73,8 @@ function pdDialogue.paginate(lines, height, font)
     -- font: optional, will get current font if not provided
     local result = {}
     local currentLine = {}
-    if font == nil then
-        font = playdate.graphics.getFont()
-    end
-    local rows = pdDialogue.getRows(height, font)
+    local _font = pdDialogue.getNormalFont(font)
+    local rows = pdDialogue.getRows(height, _font)
     for _, line in ipairs(lines) do
         if line == "" then
             -- If line is empty and currentLine has text...
@@ -113,34 +107,36 @@ function pdDialogue.process(text, width, height, font)
     -- width: width to limit text (in pixels)
     -- height: height to limit text (in pixels)
     local lines = {}
-    if font == nil then
-        font = playdate.graphics.getFont()
-    end
+    local _font = pdDialogue.getNormalFont(font)
 
     -- Split newlines in text
     for line in text:gmatch("([^\n]*)\n?") do
         table.insert(lines, line)
     end
-    local wrapped = pdDialogue.wrap(lines, width, font)
-    local paginated = pdDialogue.paginate(wrapped, height, font)
+    local wrapped = pdDialogue.wrap(lines, width, _font)
+    local paginated = pdDialogue.paginate(wrapped, height, _font)
     return paginated
 end
 
-function pdDialogue.getRows(height, font)
+function pdDialogue.getNormalFont(font)
     if font == nil then
-        font = playdate.graphics.getFont()
+        return playdate.graphics.getFont()
+    elseif type(font) == "table" then
+        return font[playdate.graphics.font.kVariantNormal]
     end
-    local leading = font:getLeading()
+    return font
+end
+
+function pdDialogue.getRows(height, font)
+    local _font = pdDialogue.getNormalFont(font)
     -- Use integer division
-    return height // (font:getHeight() + leading)
+    return height // (_font:getHeight() + _font:getLeading())
 end
 
 function pdDialogue.getRowsf(height, font)
-    if font == nil then
-        font = playdate.graphics.getFont()
-    end
-    local leading = font:getLeading()
-    return height / (font:getHeight() + leading)
+    local _font = pdDialogue.getNormalFont(font)
+    -- Use integer division
+    return height / (_font:getHeight() + _font:getLeading())
 end
 
 DialogueBox = {}
@@ -223,14 +219,8 @@ function DialogueBox:disable()
 end
 
 function DialogueBox:setText(text)
-    local font = self.font
-    if font ~= nil then
-        if type(font) == "table" then
-            font = font[playdate.graphics.font.kVariantNormal]
-        end
-    end
     self.text = text
-    self.pages = pdDialogue.process(text, self.width - self.padding, self.height - self.padding, font)
+    self.pages = pdDialogue.process(text, self.width - self.padding, self.height - self.padding, self.font)
     self:restartDialogue()
 end
 
@@ -448,10 +438,6 @@ local key_value_map = {
         set=function(value) dialogue:setFont(value) end,
         get=function() return dialogue:getFont() end
     },
-    fontFamily={
-        set=function(value) dialogue.fontFamily = value end,
-        get=function() return dialogue.fontFamily end
-    },
     nineSlice={
         set=function(value) dialogue:setNineSlice(value) end,
         get=function() return dialogue:getNineSlice() end
@@ -588,4 +574,174 @@ function pdDialogue.update()
         dialogue:update()
         dialogue:draw(dialogue_x, dialogue_y)
     end
+end
+
+ScrollBox = {}
+class("ScrollBox").extends()
+
+function ScrollBox:init(text, width, height, padding, font)
+    -- text: optional string of text to process
+    -- width: width of dialogue box (in pixels)
+    -- height: height of dialogue box (in pixels)
+    -- padding: internal padding of dialogue box (in pixels)
+    -- font: font to use for drawing text
+    DialogueBox.super.init(self)
+    self.padding = padding or 0
+    self.width = width
+    self.height = height
+    self.image = playdate.graphics.image.new(self.width - self.padding, self.height - self.padding)
+    self:setFont(font)
+    self.enabled = false
+    self.complete = false
+
+    if text ~= nil then
+        self:setText(text)
+    end
+end
+
+function ScrollBox:enable()
+    self.enabled = true
+    self:onOpen()
+end
+
+function ScrollBox:disable()
+    self.enabled = false
+    self:onClose()
+end
+
+function ScrollBox:setText(text)
+    self.text = text
+    self.lines = {}
+    for line in text:gmatch("([^\n]*)\n?") do
+        table.insert(self.lines, line)
+    end
+    self:setIndex(1.0)
+    self.lines = pdDialogue.wrap(self.lines, self.width - self.padding, self.font)
+end
+
+function ScrollBox:setFont(font)
+    self.font = font
+    local font = pdDialogue.getNormalFont(self.font)
+    self.line_height = font:getHeight() + font:getLeading()
+end
+
+function ScrollBox:setWidth(width)
+    self.width = width
+    self.image = playdate.graphics.image.new(self.width - self.padding, self.height - self.padding)
+end
+
+function ScrollBox:setHeight(height)
+    self.height = height
+    self.image = playdate.graphics.image.new(self.width - self.padding, self.height - self.padding)
+end
+
+function ScrollBox:setNineSlice(nineSlice)
+    self.nineSlice = nineSlice
+end
+
+function ScrollBox:setIndex(value)
+    self.index = value
+    local maxRow = pdDialogue.getRows(self.height)
+    if self.index < 1 then
+        self.index = 1
+    end
+
+    if self.index > #self.lines - maxRow then
+        self.index = #self.lines - maxRow
+        self.complete = true
+        self:onComplete()
+    else
+        self.complete = false
+    end
+    self.index_remainder = self.index % 1
+end
+
+function ScrollBox:scroll(delta)
+    self:setIndex(self.index + delta)
+end
+
+function ScrollBox:drawBackground(x, y)
+    if self.nineSlice ~= nil then
+        self.nineSlice:drawInRect(x, y, self.width, self.height)
+    else
+        playdate.graphics.setColor(playdate.graphics.kColorWhite)
+        playdate.graphics.fillRect(x, y, self.width, self.height)
+        playdate.graphics.setColor(playdate.graphics.kColorBlack)
+        playdate.graphics.drawRect(x, y, self.width, self.height)
+    end
+end
+
+function ScrollBox:drawText(x, y, text)
+    playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillBlack)
+    if self.font ~= nil then
+        -- variable will be table if a font family
+        if type(self.font) == "table" then
+            -- Draw with font family
+            playdate.graphics.drawText(text, x, y, self.font)
+        else
+            -- Draw using font
+            self.font:drawText(text, x, y)
+        end
+    else
+        playdate.graphics.drawText(text, x, y)
+    end
+end
+
+function ScrollBox:drawPrompt(x, y)
+    DialogueBox.buttonPrompt(x + self.width - 20, y + self.height - 20)
+end
+
+function ScrollBox:draw(x, y)
+    local text = pdDialogue.window(
+        self.lines,
+        math.floor(self.index),
+        self.height + self.line_height + self.padding
+    )
+
+    self:drawBackground(x, y)
+    self.image:clear(playdate.graphics.kColorClear)
+    playdate.graphics.pushContext(self.image)
+        -- Draw text with y offset
+        self:drawText(
+            self.padding // 2,
+            (self.padding // 2) - (self.index_remainder * (self.line_height + self.padding)),
+            text
+        )
+    playdate.graphics.popContext()
+    self.image:draw(x + (self.padding // 2), y + (self.padding // 2))
+    if self.complete then
+        self:drawPrompt(x, y)
+    end
+end
+
+function ScrollBox:update()
+    -- local pageLength = #self.pages[self.currentPage]
+    -- self.currentChar += self.speed
+    -- if self.currentChar > pageLength then
+        -- self.currentChar = pageLength
+    -- end
+
+    -- local previous_line_complete = self.line_complete
+    -- local previous_dialogue_complete = self.dialogue_complete
+    -- self.line_complete = self.currentChar == pageLength
+    -- self.dialogue_complete = self.line_complete and self.currentPage == #self.pages
+
+    -- if previous_line_complete ~= self.line_complete then
+    --     self:onPageComplete()
+    -- end
+    -- if previous_dialogue_complete ~= self.dialogue_complete then
+    --     self:onDialogueComplete()
+    -- end
+end
+
+function ScrollBox:onOpen()
+    -- Override by user
+end
+
+function ScrollBox:onComplete()
+    -- Override by user
+end
+
+function ScrollBox:onClose()
+    -- Override by user
 end
