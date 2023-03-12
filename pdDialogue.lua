@@ -615,8 +615,8 @@ function ScrollBox:setText(text)
     for line in text:gmatch("([^\n]*)\n?") do
         table.insert(self.lines, line)
     end
-    self:setIndex(1.0)
     self.lines = pdDialogue.wrap(self.lines, self.width - self.padding, self.font)
+    self:setIndex(1.0)
 end
 
 function ScrollBox:setFont(font)
@@ -641,13 +641,13 @@ end
 
 function ScrollBox:setIndex(value)
     self.index = value
-    local maxRow = pdDialogue.getRows(self.height)
+    local maxRow = pdDialogue.getRows(self.height, self.font)
     if self.index < 1 then
         self.index = 1
     end
 
-    if self.index > #self.lines - maxRow then
-        self.index = #self.lines - maxRow
+    if self.index > #self.lines - maxRow + 1 then
+        self.index = #self.lines - maxRow + 1
         self.complete = true
         self:onComplete()
     else
@@ -704,7 +704,7 @@ function ScrollBox:draw(x, y)
         -- Draw text with y offset
         self:drawText(
             self.padding // 2,
-            (self.padding // 2) - (self.index_remainder * (self.line_height + self.padding)),
+            (self.padding // 2) - (self.index_remainder * (self.line_height + self.padding // 2)),
             text
         )
     playdate.graphics.popContext()
