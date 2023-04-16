@@ -45,3 +45,5 @@ builds/
 .vscode/
 
 Build and Run (Simulator).ps1
+
+ADD_ENV_VARIABLE.cmd

@@ -39,7 +39,7 @@ Yeah.]]
 
 local width, height, padding = 390, 48, 8
 local x, y = 5, 186
-local dialogue = DialogueBox(text, width, height, padding)
+local dialogue = pdDialogueBox(text, width, height, padding)
 dialogue:enable()
 
 function playdate.update()

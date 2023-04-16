@@ -1,3 +1,15 @@
+------------------------------------------------
+--- Dialogue classes intended to ease the    ---
+--- implementation of dialogue into playdate ---
+--- games. Developed by:                     ---
+--- GammaGames, PizzaFuelDev and NickSr      ---
+------------------------------------------------
+
+-- You can find examples and docs at https://github.com/PizzaFuel/pdDialogue
+
+----------------------------------------------------------------------------
+-- #Section: pdDialogue
+----------------------------------------------------------------------------
 pdDialogue = {}
 
 function pdDialogue.wrap(lines, width, font)
@@ -143,15 +155,18 @@ function pdDialogue.getRowsf(height, font)
     return height / (font:getHeight() + leading)
 end
 
-DialogueBox = {}
-class("DialogueBox").extends()
+----------------------------------------------------------------------------
+-- #Section: pdDialogueBox
+----------------------------------------------------------------------------
+pdDialogueBox = {}
+class("pdDialogueBox").extends()
 
-function DialogueBox.buttonPrompt(x, y)
+function pdDialogueBox.buttonPrompt(x, y)
     playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillBlack)
     playdate.graphics.getSystemFont():drawText("Ⓐ", x, y)
 end
 
-function DialogueBox.arrowPrompt(x, y, color)
+function pdDialogueBox.arrowPrompt(x, y, color)
     playdate.graphics.setColor(color or playdate.graphics.kColorBlack)
     playdate.graphics.fillTriangle(
         x, y,
@@ -160,13 +175,13 @@ function DialogueBox.arrowPrompt(x, y, color)
     )
 end
 
-function DialogueBox:init(text, width, height, padding, font)
+function pdDialogueBox:init(text, width, height, padding, font)
     -- text: optional string of text to process
     -- width: width of dialogue box (in pixels)
     -- height: height of dialogue box (in pixels)
     -- padding: internal padding of dialogue box (in pixels)
     -- font: font to use for drawing text
-    DialogueBox.super.init(self)
+    pdDialogueBox.super.init(self)
     self.speed = 0.5 -- char per frame
     self.padding = padding or 0
     self.width = width
@@ -181,7 +196,7 @@ function DialogueBox:init(text, width, height, padding, font)
     end
 end
 
-function DialogueBox:getInputHandlers()
+function pdDialogueBox:getInputHandlers()
     return {
         AButtonDown = function()
             self:setSpeed(2)
@@ -212,17 +227,17 @@ function DialogueBox:getInputHandlers()
     }
 end
 
-function DialogueBox:enable()
+function pdDialogueBox:enable()
     self.enabled = true
     self:onOpen()
 end
 
-function DialogueBox:disable()
+function pdDialogueBox:disable()
     self.enabled = false
     self:onClose()
 end
 
-function DialogueBox:setText(text)
+function pdDialogueBox:setText(text)
     local font = self.font
     if font ~= nil then
         if type(font) == "table" then
@@ -234,113 +249,113 @@ function DialogueBox:setText(text)
     self:restartDialogue()
 end
 
-function DialogueBox:getText()
+function pdDialogueBox:getText()
     return self.text
 end
 
-function DialogueBox:setPages(pages)
+function pdDialogueBox:setPages(pages)
     self.pages = pages
     self:restartDialogue()
 end
 
-function DialogueBox:getPages()
+function pdDialogueBox:getPages()
     return self.pages
 end
 
-function DialogueBox:setWidth(width)
+function pdDialogueBox:setWidth(width)
     self.width = width
     if self.text ~= nil then
         self:setText(self.text)
     end
 end
 
-function DialogueBox:getWidth()
+function pdDialogueBox:getWidth()
     return self.width
 end
 
-function DialogueBox:setHeight(height)
+function pdDialogueBox:setHeight(height)
     self.height = height
     if self.text ~= nil then
         self:setText(self.text)
     end
 end
 
-function DialogueBox:getHeight()
+function pdDialogueBox:getHeight()
     return self.height
 end
 
-function DialogueBox:setPadding(padding)
+function pdDialogueBox:setPadding(padding)
     self.padding = padding
     self:setText(self.text)
 end
 
-function DialogueBox:getPadding()
+function pdDialogueBox:getPadding()
     return self.padding
 end
 
-function DialogueBox:setFont(font)
+function pdDialogueBox:setFont(font)
     self.font = font
 end
 
-function DialogueBox:getFont()
+function pdDialogueBox:getFont()
     return self.font
 end
 
-function DialogueBox:setNineSlice(nineSlice)
+function pdDialogueBox:setNineSlice(nineSlice)
     self.nineSlice = nineSlice
 end
 
-function DialogueBox:getNineSlice()
+function pdDialogueBox:getNineSlice()
     return self.nineSlice
 end
 
-function DialogueBox:setSpeed(speed)
+function pdDialogueBox:setSpeed(speed)
     self.speed = speed
 end
 
-function DialogueBox:getSpeed()
+function pdDialogueBox:getSpeed()
     return self.speed
 end
 
-function DialogueBox:restartDialogue()
+function pdDialogueBox:restartDialogue()
     self.currentPage = 1
     self.currentChar = 1
     self.line_complete = false
     self.dialogue_complete = false
 end
 
-function DialogueBox:finishDialogue()
+function pdDialogueBox:finishDialogue()
     self.currentPage = #self.pages
     self:finishLine()
 end
 
-function DialogueBox:restartLine()
+function pdDialogueBox:restartLine()
     self.currentChar = 1
     self.line_complete = false
     self.dialogue_complete = false
 end
 
-function DialogueBox:finishLine()
+function pdDialogueBox:finishLine()
     self.currentChar = #self.pages[self.currentPage]
     self.line_complete = true
     self.dialogue_complete = self.currentPage == #self.pages
 end
 
-function DialogueBox:previousPage()
+function pdDialogueBox:previousPage()
     if self.currentPage - 1 >= 1 then
         self.currentPage -= 1
         self:restartLine()
     end
 end
 
-function DialogueBox:nextPage()
+function pdDialogueBox:nextPage()
     if self.currentPage + 1 <= #self.pages then
         self.currentPage += 1
         self:restartLine()
     end
 end
 
-function DialogueBox:drawBackground(x, y)
+function pdDialogueBox:drawBackground(x, y)
     if self.nineSlice ~= nil then
         self.nineSlice:drawInRect(x, y, self.width, self.height)
     else
@@ -351,7 +366,7 @@ function DialogueBox:drawBackground(x, y)
     end
 end
 
-function DialogueBox:drawText(x, y, text)
+function pdDialogueBox:drawText(x, y, text)
     playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillBlack)
     if self.font ~= nil then
         -- variable will be table if a font family
@@ -367,11 +382,11 @@ function DialogueBox:drawText(x, y, text)
     end
 end
 
-function DialogueBox:drawPrompt(x, y)
-    DialogueBox.buttonPrompt(x + self.width - 20, y + self.height - 20)
+function pdDialogueBox:drawPrompt(x, y)
+    pdDialogueBox.buttonPrompt(x + self.width - 20, y + self.height - 20)
 end
 
-function DialogueBox:draw(x, y)
+function pdDialogueBox:draw(x, y)
     local currentText = self.pages[self.currentPage]
     if not self.line_complete then
         currentText = currentText:sub(1, math.floor(self.currentChar))
@@ -383,23 +398,23 @@ function DialogueBox:draw(x, y)
     end
 end
 
-function DialogueBox:onOpen()
+function pdDialogueBox:onOpen()
     -- Override by user
 end
 
-function DialogueBox:onPageComplete()
+function pdDialogueBox:onPageComplete()
     -- Override by user
 end
 
-function DialogueBox:onDialogueComplete()
+function pdDialogueBox:onDialogueComplete()
     -- Override by user
 end
 
-function DialogueBox:onClose()
+function pdDialogueBox:onClose()
     -- Override by user
 end
 
-function DialogueBox:update()
+function pdDialogueBox:update()
     local pageLength = #self.pages[self.currentPage]
     self.currentChar += self.speed
     if self.currentChar > pageLength then
@@ -419,8 +434,11 @@ function DialogueBox:update()
     end
 end
 
+----------------------------------------------------------------------------
+-- #Section: dialogue box used in pdDialogue
+----------------------------------------------------------------------------
 local dialogue_x, dialogue_y = 5, 186
-local dialogue = DialogueBox(nil, 390, 48, 8)
+local dialogue = pdDialogueBox(nil, 390, 48, 8)
 local callbacks = {}
 local say_default, say_nils
 local key_value_map = {
@@ -548,6 +566,9 @@ function dialogue:onClose()
     end
 end
 
+----------------------------------------------------------------------------
+-- #Section: pdDialogue user functions
+----------------------------------------------------------------------------
 function pdDialogue.set(key, value)
     if key_value_map[key] ~= nil then
         local backup = key_value_map[key].get()
