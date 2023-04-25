@@ -13,90 +13,88 @@
 pdDialogue = {}
 
 function pdDialogue.wrap(lines, width, font)
-    -- lines: array of strings
-    -- width: width to limit text (in pixels)
-    -- font: optional, will get current font if not provided
-    if font == nil then
-        font = playdate.graphics.getFont()
-    end
-
+    --[[
+    lines: an array of strings
+    width: the maximum width of each line (in pixels)
+    font: the font to use (optional, uses default font if not provided)
+    ]]--
+    font = font or playdate.graphics.getFont()
+    
     local result = {}
+    
     for _, line in ipairs(lines) do
-        local currentWidth = 0
-        local currentLine = ""
-        if line == "" then
-            -- Insert blank lines without processing
+        local currentWidth, currentLine = 0, ""
+        
+        if line == "" or font:getTextWidth(line) <= width then
             table.insert(result, line)
-        elseif font:getTextWidth(line) <= width then
-            -- Insert short enough lines without processing
-            table.insert(result, line)
-        else
-            -- Iterate through every word (split by whitespace) in the line
-            for word in line:gmatch("%S+") do
-                local wordWidth = font:getTextWidth(word)
-                if currentWidth == 0 then
-                    -- If current line is empty, set to word
-                    currentWidth = wordWidth
-                    currentLine = word
-                else
-                    -- If not, concatonate the strings and get width
-                    local newLine = currentLine .. " " .. word
-                    local newWidth = font:getTextWidth(newLine)
-                    if newWidth >= width then
-                        table.insert(result, currentLine)
-                        currentWidth = wordWidth
-                        currentLine = word
-                    else
-                        currentWidth = newWidth
-                        currentLine = newLine
-                    end
-                end
-            end
-            -- If line is complete and currentLine is not empty, add to result
-            if currentWidth ~= 0 then
+            goto continue
+        end
+        
+        for word in line:gmatch("%S+") do
+            local wordWidth = font:getTextWidth(word)
+            local newLine = currentLine .. (currentLine ~= "" and " " or "") .. word
+            local newWidth = font:getTextWidth(newLine)
+            
+            if newWidth >= width then
                 table.insert(result, currentLine)
+                currentWidth, currentLine = wordWidth, word
+            else
+                currentWidth, currentLine = newWidth, newLine
             end
         end
+        
+        if currentWidth ~= 0 then
+            table.insert(result, currentLine)
+        end
+        
+        ::continue::
     end
+    
     return result
 end
 
-function pdDialogue.window(text, start_index, height, font)
-    -- lines: array of strings (pre-wrapped)
-    -- start_index: row index to start window
-    -- rows: number of rows to render
+function pdDialogue.window(text, startIndex, height, font)
+    --[[
+    text: an array of strings (pre-wrapped)
+    startIndex: the row index to start the window
+    height: the height (in pixels) of the window
+    font: the font to use (optional, uses default font if not provided)
+    ]]--
+    font = font or playdate.graphics.getFont()
+    
     local result = {text[start_index]}
-    if font == nil then
-        font = playdate.graphics.getFont()
-    end
-    -- Subtract one because we start with 1 row
     local rows = pdDialogue.getRows(height, font) - 1
+    
     for index = 1, rows do
         -- Check if index is out of range of the text
         if start_index + index > #text then
             break
         end
-
-        table.insert(result, text[start_index + index])
+        
+        table.insert(result, text[i])
     end
-    -- Return a single string
+    
     return table.concat(result, "\n")
 end
 
 function pdDialogue.paginate(lines, height, font)
-    -- lines: array of strings (pre-wrapped)
-    -- height: height to limit text (in pixels)
-    -- font: optional, will get current font if not provided
+    --[[ 
+        lines: array of strings (pre-wrapped)
+        height: height to limit text (in pixels)
+        font: optional, will get current font if not provided
+    ]]--
+
     local result = {}
     local currentLine = {}
-    if font == nil then
-        font = playdate.graphics.getFont()
-    end
+
+    font = font or playdate.graphics.getFont()
+
     local rows = pdDialogue.getRows(height, font)
+
     for _, line in ipairs(lines) do
         if line == "" then
             -- If line is empty and currentLine has text...
-            if #currentLine ~= 0 then
+            if #currentLine > 0 then
                 -- Merge currentLine and add to result
                 table.insert(result, table.concat(currentLine, "\n"))
                 currentLine = {}
@@ -106,53 +104,57 @@ function pdDialogue.paginate(lines, height, font)
             if #currentLine >= rows then
                 -- Concat currentLine, add to result, and start new line
                 table.insert(result, table.concat(currentLine, "\n"))
-                currentLine = {line}
+                currentLine = { line }
             else
                 table.insert(currentLine, line)
             end
         end
     end
+
     -- If all lines are complete and currentLine is not empty, add to result
-    if #currentLine ~= 0 then
+    if #currentLine > 0 then
         table.insert(result, table.concat(currentLine, "\n"))
         currentLine = {}
     end
+
     return result
 end
 
 function pdDialogue.process(text, width, height, font)
-    -- lines: array of strings (pre-wrapped)
-    -- width: width to limit text (in pixels)
-    -- height: height to limit text (in pixels)
+    --[[ 
+    text: string containing the text to be processed
+    width: width to limit text (in pixels)
+    height: height to limit text (in pixels)
+    font: optional, will get current font if not provided
+    ]]--
     local lines = {}
-    if font == nil then
-        font = playdate.graphics.getFont()
-    end
+    font = font or playdate.graphics.getFont()
 
     -- Split newlines in text
     for line in text:gmatch("([^\n]*)\n?") do
         table.insert(lines, line)
     end
+
+    -- Wrap the text
     local wrapped = pdDialogue.wrap(lines, width, font)
+
+    -- Paginate the wrapped text
     local paginated = pdDialogue.paginate(wrapped, height, font)
+
     return paginated
 end
 
+
 function pdDialogue.getRows(height, font)
-    if font == nil then
-        font = playdate.graphics.getFont()
-    end
-    local leading = font:getLeading()
-    -- Use integer division
-    return height // (font:getHeight() + leading)
+    font = font or playdate.graphics.getFont()
+    local lineHeight = font:getHeight() + font:getLeading()
+    return math.floor(height / lineHeight)
 end
 
 function pdDialogue.getRowsf(height, font)
-    if font == nil then
-        font = playdate.graphics.getFont()
-    end
-    local leading = font:getLeading()
-    return height / (font:getHeight() + leading)
+    font = font or playdate.graphics.getFont()
+    local lineHeight = font:getHeight() + font:getLeading()
+    return height / lineHeight
 end
 
 ----------------------------------------------------------------------------
@@ -176,11 +178,14 @@ function pdDialogueBox.arrowPrompt(x, y, color)
 end
 
 function pdDialogueBox:init(text, width, height, padding, font)
-    -- text: optional string of text to process
-    -- width: width of dialogue box (in pixels)
-    -- height: height of dialogue box (in pixels)
-    -- padding: internal padding of dialogue box (in pixels)
-    -- font: font to use for drawing text
+    --[[
+        text: optional string of text to process
+        width: width of dialogue box (in pixels)
+        height: height of dialogue box (in pixels)
+        padding: internal padding of dialogue box (in pixels)
+        font: font to use for drawing text
+    ]]--
+
     pdDialogueBox.super.init(self)
     self.speed = 0.5 -- char per frame
     self.padding = padding or 0
@@ -238,11 +243,10 @@ function pdDialogueBox:disable()
 end
 
 function pdDialogueBox:setText(text)
-    local font = self.font
-    if font ~= nil then
-        if type(font) == "table" then
-            font = font[playdate.graphics.font.kVariantNormal]
-        end
+    local font = self.font or playdate.graphics.getFont()
+
+    if type(font) == "table" then
+        font = font[playdate.graphics.font.kVariantNormal]
     end
     self.text = text
     self.pages = pdDialogue.process(text, self.width - self.padding, self.height - self.padding, font)
@@ -399,19 +403,19 @@ function pdDialogueBox:draw(x, y)
 end
 
 function pdDialogueBox:onOpen()
-    -- Override by user
+    -- Overrideable by user
 end
 
 function pdDialogueBox:onPageComplete()
-    -- Override by user
+    -- Overrideable by user
 end
 
 function pdDialogueBox:onDialogueComplete()
-    -- Override by user
+    -- Overrideable by user
 end
 
 function pdDialogueBox:onClose()
-    -- Override by user
+    -- Overrideable by user
 end
 
 function pdDialogueBox:update()
@@ -437,126 +441,127 @@ end
 ----------------------------------------------------------------------------
 -- #Section: dialogue box used in pdDialogue
 ----------------------------------------------------------------------------
-local dialogue_x, dialogue_y = 5, 186
-local dialogue = pdDialogueBox(nil, 390, 48, 8)
-local callbacks = {}
-local say_default, say_nils
-local key_value_map = {
+pdDialogue.DialogueBox_x,  pdDialogue.DialogueBox_y = 5, 186
+pdDialogue.DialogueBox = pdDialogueBox(nil, 390, 48, 8)
+pdDialogue.DialogueBox_Callbacks = {}
+pdDialogue.DialogueBox_Say_Default = nil
+pdDialogue.DialogueBox_Say_Nils = nil
+pdDialogue.DialogueBox_KeyValueMap = {
     width={
-        set=function(value) dialogue:setWidth(value) end,
-        get=function() return dialogue:getWidth() end
+        set=function(value) pdDialogue.DialogueBox:setWidth(value) end,
+        get=function() return pdDialogue.DialogueBox:getWidth() end
     },
     height={
-        set=function(value) dialogue:setHeight(value) end,
-        get=function() return dialogue:getHeight() end
+        set=function(value) pdDialogue.DialogueBox:setHeight(value) end,
+        get=function() return pdDialogue.DialogueBox:getHeight() end
     },
     x={
-        set=function(value) dialogue_x = value end,
-        get=function() return dialogue_x end
+        set=function(value)  pdDialogue.DialogueBox_x = value end,
+        get=function() return  pdDialogue.DialogueBox_x end
     },
     y={
-        set=function(value) dialogue_y = value end,
-        get=function() return dialogue_y end
+        set=function(value)  pdDialogue.DialogueBox_y = value end,
+        get=function() return  pdDialogue.DialogueBox_y end
     },
     padding={
-        set=function(value) dialogue:setPadding(value) end,
-        get=function() return dialogue:getPadding() end
+        set=function(value) pdDialogue.DialogueBox:setPadding(value) end,
+        get=function() return pdDialogue.DialogueBox:getPadding() end
     },
     font={
-        set=function(value) dialogue:setFont(value) end,
-        get=function() return dialogue:getFont() end
+        set=function(value) pdDialogue.DialogueBox:setFont(value) end,
+        get=function() return pdDialogue.DialogueBox:getFont() end
     },
     fontFamily={
-        set=function(value) dialogue.fontFamily = value end,
-        get=function() return dialogue.fontFamily end
+        set=function(value) pdDialogue.DialogueBox.fontFamily = value end,
+        get=function() return pdDialogue.DialogueBox.fontFamily end
     },
     nineSlice={
-        set=function(value) dialogue:setNineSlice(value) end,
-        get=function() return dialogue:getNineSlice() end
+        set=function(value) pdDialogue.DialogueBox:setNineSlice(value) end,
+        get=function() return pdDialogue.DialogueBox:getNineSlice() end
     },
     speed={
-        set=function(value) dialogue:setSpeed(value) end,
-        get=function() return dialogue:getSpeed() end
+        set=function(value) pdDialogue.DialogueBox:setSpeed(value) end,
+        get=function() return pdDialogue.DialogueBox:getSpeed() end
     },
     drawBackground={
-        set=function(func) callbacks["drawBackground"] = func end,
-        get=function() return callbacks["drawBackground"] end
+        set=function(func) pdDialogue.DialogueBox_Callbacks["drawBackground"] = func end,
+        get=function() return pdDialogue.DialogueBox_Callbacks["drawBackground"] end
     },
     drawText={
-        set=function(func) callbacks["drawText"] = func end,
-        get=function() return callbacks["drawText"] end
+        set=function(func) pdDialogue.DialogueBox_Callbacks["drawText"] = func end,
+        get=function() return pdDialogue.DialogueBox_Callbacks["drawText"] end
     },
     drawPrompt={
-        set=function(func) callbacks["drawPrompt"] = func end,
-        get=function() return callbacks["drawPrompt"] end
+        set=function(func) pdDialogue.DialogueBox_Callbacks["drawPrompt"] = func end,
+        get=function() return pdDialogue.DialogueBox_Callbacks["drawPrompt"] end
     },
     onOpen={
-        set=function(func) callbacks["onOpen"] = func end,
-        get=function() return callbacks["onOpen"] end
+        set=function(func) pdDialogue.DialogueBox_Callbacks["onOpen"] = func end,
+        get=function() return pdDialogue.DialogueBox_Callbacks["onOpen"] end
     },
     onPageComplete={
-        set=function(func) callbacks["onPageComplete"] = func end,
-        get=function() return callbacks["onPageComplete"] end
+        set=function(func) pdDialogue.DialogueBox_Callbacks["onPageComplete"] = func end,
+        get=function() return pdDialogue.DialogueBox_Callbacks["onPageComplete"] end
     },
     onDialogueComplete={
-        set=function(func) callbacks["onDialogueComplete"] = func end,
-        get=function() return callbacks["onDialogueComplete"] end
+        set=function(func) pdDialogue.DialogueBox_Callbacks["onDialogueComplete"] = func end,
+        get=function() return pdDialogue.DialogueBox_Callbacks["onDialogueComplete"] end
     },
     onClose={
-        set=function(func) callbacks["onClose"] = func end,
-        get=function() return callbacks["onClose"] end
+        set=function(func) pdDialogue.DialogueBox_Callbacks["onClose"] = func end,
+        get=function() return pdDialogue.DialogueBox_Callbacks["onClose"] end
     }
 }
-function dialogue:drawBackground(x, y)
-    if callbacks["drawBackground"] ~= nil then
-        callbacks["drawBackground"](dialogue, x, y)
+function pdDialogue.DialogueBox:drawBackground(x, y)
+    if pdDialogue.DialogueBox_Callbacks["drawBackground"] ~= nil then
+        pdDialogue.DialogueBox_Callbacks["drawBackground"](dialogue, x, y)
     else
-        dialogue.super.drawBackground(self, x, y)
+        pdDialogue.DialogueBox.super.drawBackground(self, x, y)
     end
 end
-function dialogue:drawText(x, y ,text)
-    if callbacks["drawText"] ~= nil then
-        callbacks["drawText"](dialogue, x, y, text)
+function pdDialogue.DialogueBox:drawText(x, y ,text)
+    if pdDialogue.DialogueBox_Callbacks["drawText"] ~= nil then
+        pdDialogue.DialogueBox_Callbacks["drawText"](dialogue, x, y, text)
     else
-        dialogue.super.drawText(self, x, y, text)
+        pdDialogue.DialogueBox.super.drawText(self, x, y, text)
     end
 end
-function dialogue:drawPrompt(x, y)
-    if callbacks["drawPrompt"] ~= nil then
-        callbacks["drawPrompt"](dialogue, x, y)
+function pdDialogue.DialogueBox:drawPrompt(x, y)
+    if pdDialogue.DialogueBox_Callbacks["drawPrompt"] ~= nil then
+        pdDialogue.DialogueBox_Callbacks["drawPrompt"](dialogue, x, y)
     else
-        dialogue.super.drawPrompt(self, x, y)
+        pdDialogue.DialogueBox.super.drawPrompt(self, x, y)
     end
 end
-function dialogue:onOpen()
+function pdDialogue.DialogueBox:onOpen()
     playdate.inputHandlers.push(self:getInputHandlers(), true)
-    if callbacks["onOpen"] ~= nil then
-        callbacks["onOpen"]()
+    if pdDialogue.DialogueBox_Callbacks["onOpen"] ~= nil then
+        pdDialogue.DialogueBox_Callbacks["onOpen"]()
     end
 end
-function dialogue:onPageComplete()
-    if callbacks["onPageComplete"] ~= nil then
-        callbacks["onPageComplete"]()
+function pdDialogue.DialogueBox:onPageComplete()
+    if pdDialogue.DialogueBox_Callbacks["onPageComplete"] ~= nil then
+        pdDialogue.DialogueBox_Callbacks["onPageComplete"]()
     end
 end
-function dialogue:onDialogueComplete()
-    if callbacks["onDialogueComplete"] ~= nil then
-        callbacks["onDialogueComplete"]()
+function pdDialogue.DialogueBox:onDialogueComplete()
+    if pdDialogue.DialogueBox_Callbacks["onDialogueComplete"] ~= nil then
+        pdDialogue.DialogueBox_Callbacks["onDialogueComplete"]()
     end
 end
-function dialogue:onClose()
+function pdDialogue.DialogueBox:onClose()
     -- Make a backup of the current onClose callback
-    local current = callbacks["onClose"]
+    local current = pdDialogue.DialogueBox_Callbacks["onClose"]
     -- This will reset all (including the callbacks)
-    if say_default ~= nil then
-        pdDialogue.setup(say_default)
-        say_default = nil
+    if pdDialogue.DialogueBox_Say_Default ~= nil then
+        pdDialogue.setup(pdDialogue.DialogueBox_Say_Default)
+        pdDialogue.DialogueBox_Say_Default = nil
     end
-    if say_nils ~= nil then
-        for _, key in ipairs(say_nils) do
+    if pdDialogue.DialogueBox_Say_Nils ~= nil then
+        for _, key in ipairs(pdDialogue.DialogueBox_Say_Nils) do
             pdDialogue.set(key, nil)
         end
-        say_nils = nil
+        pdDialogue.DialogueBox_Say_Nils = nil
     end
 
     playdate.inputHandlers.pop()
@@ -567,19 +572,19 @@ function dialogue:onClose()
 end
 
 ----------------------------------------------------------------------------
--- #Section: pdDialogue user functions
+-- #Section: pdDialogue main user functions
 ----------------------------------------------------------------------------
 function pdDialogue.set(key, value)
-    if key_value_map[key] ~= nil then
-        local backup = key_value_map[key].get()
-        key_value_map[key].set(value)
+    if pdDialogue.DialogueBox_KeyValueMap[key] ~= nil then
+        local backup = pdDialogue.DialogueBox_KeyValueMap[key].get()
+        pdDialogue.DialogueBox_KeyValueMap[key].set(value)
         return backup
     end
     return nil
 end
 
 function pdDialogue.setup(config)
-    -- config: table of key value pairs. Supported keys are in key_value_map
+    -- config: table of key value pairs. Supported keys are in pdDialogue.DialogueBox_KeyValueMap
     local backup = {}
     local nils = {}
     for key, value in pairs(config) do
@@ -594,19 +599,21 @@ function pdDialogue.setup(config)
 end
 
 function pdDialogue.say(text, config)
-    -- text: string (can be multiline) to say
-    -- config: optional table, will provide temporary overrides for this one dialogue box
+    --[[
+    text: string (can be multiline) to say
+    config: optional table, will provide temporary overrides for this one dialogue box
+    ]]--
     if config ~= nil then
-        say_default, say_nils = pdDialogue.setup(config)
+        pdDialogue.DialogueBox_Say_Default, pdDialogue.DialogueBox_Say_Nils = pdDialogue.setup(config)
     end
-    dialogue:setText(text)
-    dialogue:enable()
-    return dialogue
+    pdDialogue.DialogueBox:setText(text)
+    pdDialogue.DialogueBox:enable()
+    return pdDialogue.DialogueBox
 end
 
 function pdDialogue.update()
-    if dialogue.enabled then
-        dialogue:update()
-        dialogue:draw(dialogue_x, dialogue_y)
+    if pdDialogue.DialogueBox.enabled then
+        pdDialogue.DialogueBox:update()
+        pdDialogue.DialogueBox:draw(pdDialogue.DialogueBox_x, pdDialogue.DialogueBox_y)
     end
 end

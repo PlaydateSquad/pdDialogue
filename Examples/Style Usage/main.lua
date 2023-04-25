@@ -42,6 +42,7 @@ playdate.inputHandlers.push({
     -- Right pushed:
     rightButtonUp = function()
         directionText = "➡️"
+        dialogue = pdDialogue.DialogueBox
         pdDialogue.say([[I would really advise against talking to that wizard
 He is annoying]], {
             width=400,
