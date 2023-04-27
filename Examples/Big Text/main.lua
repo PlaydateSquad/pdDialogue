@@ -40,10 +40,16 @@ Yeah.]]
 local width, height, padding = 390, 48, 8
 local x, y = 5, 186
 local dialogue = pdDialogueBox(text, width, height, padding)
+playdate.inputHandlers.push(dialogue:getInputHandlers())
+function dialogue:onClose()
+    playdate.inputHandlers.pop()
+end
 dialogue:enable()
 
 function playdate.update()
 	gfx.clear(gfx.kColorWhite)
     dialogue:update()
-	dialogue:draw(x, y)
+	if dialogue.enabled then
+		dialogue:draw(x, y)
+	end
 end
