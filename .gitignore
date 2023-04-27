@@ -41,3 +41,9 @@ luac.out
 # Builds and Code Editor
 builds/
 .sentry-native/
+
+.vscode/
+
+Build and Run (Simulator).ps1
+
+ADD_ENV_VARIABLE.cmd
