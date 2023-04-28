@@ -7,6 +7,9 @@
 
 -- You can find examples and docs at https://github.com/PizzaFuel/pdDialogue
 
+local pd = playdate
+local gfx = pd.graphics
+
 ----------------------------------------------------------------------------
 -- #Section: pdDialogue
 ----------------------------------------------------------------------------
@@ -18,23 +21,23 @@ function pdDialogue.wrap(lines, width, font)
     width: the maximum width of each line (in pixels)
     font: the font to use (optional, uses default font if not provided)
     ]]--
-    font = font or playdate.graphics.getFont()
-    
+    font = font or gfx.getFont()
+
     local result = {}
-    
+
     for _, line in ipairs(lines) do
         local currentWidth, currentLine = 0, ""
-        
+
         if line == "" or font:getTextWidth(line) <= width then
             table.insert(result, line)
             goto continue
         end
-        
+
         for word in line:gmatch("%S+") do
             local wordWidth = font:getTextWidth(word)
             local newLine = currentLine .. (currentLine ~= "" and " " or "") .. word
             local newWidth = font:getTextWidth(newLine)
-            
+
             if newWidth >= width then
                 table.insert(result, currentLine)
                 currentWidth, currentLine = wordWidth, word
@@ -42,14 +45,14 @@ function pdDialogue.wrap(lines, width, font)
                 currentWidth, currentLine = newWidth, newLine
             end
         end
-        
+
         if currentWidth ~= 0 then
             table.insert(result, currentLine)
         end
-        
+
         ::continue::
     end
-    
+
     return result
 end
 
@@ -60,25 +63,25 @@ function pdDialogue.window(text, startIndex, height, font)
     height: the height (in pixels) of the window
     font: the font to use (optional, uses default font if not provided)
     ]]--
-    font = font or playdate.graphics.getFont()
-    
+    font = font or gfx.getFont()
+
     local result = {text[start_index]}
     local rows = pdDialogue.getRows(height, font) - 1
-    
+
     for index = 1, rows do
         -- Check if index is out of range of the text
         if start_index + index > #text then
             break
         end
-        
+
         table.insert(result, text[i])
     end
-    
+
     return table.concat(result, "\n")
 end
 
 function pdDialogue.paginate(lines, height, font)
-    --[[ 
+    --[[
         lines: array of strings (pre-wrapped)
         height: height to limit text (in pixels)
         font: optional, will get current font if not provided
@@ -87,7 +90,7 @@ function pdDialogue.paginate(lines, height, font)
     local result = {}
     local currentLine = {}
 
-    font = font or playdate.graphics.getFont()
+    font = font or gfx.getFont()
 
     local rows = pdDialogue.getRows(height, font)
 
@@ -121,14 +124,14 @@ function pdDialogue.paginate(lines, height, font)
 end
 
 function pdDialogue.process(text, width, height, font)
-    --[[ 
+    --[[
     text: string containing the text to be processed
     width: width to limit text (in pixels)
     height: height to limit text (in pixels)
     font: optional, will get current font if not provided
     ]]--
     local lines = {}
-    font = font or playdate.graphics.getFont()
+    font = font or gfx.getFont()
 
     -- Split newlines in text
     for line in text:gmatch("([^\n]*)\n?") do
@@ -146,15 +149,56 @@ end
 
 
 function pdDialogue.getRows(height, font)
-    font = font or playdate.graphics.getFont()
+    font = font or gfx.getFont()
     local lineHeight = font:getHeight() + font:getLeading()
     return math.floor(height / lineHeight)
 end
 
 function pdDialogue.getRowsf(height, font)
-    font = font or playdate.graphics.getFont()
+    font = font or gfx.getFont()
     local lineHeight = font:getHeight() + font:getLeading()
     return height / lineHeight
+end
+
+----------------------------------------------------------------------------
+-- #Section: pdDialogueSprite
+----------------------------------------------------------------------------
+pdDialogueSprite = {}
+class("pdDialogueSprite").extends(gfx.sprite)
+
+function pdDialogueSprite:init(dialogue)
+    --[[
+        dialogue: an instance of pdDialogueBox
+    ]]--
+    pdDialogueSprite.super.init(self)
+	self.image = gfx.image.new(dialogue.width, dialogue.height)
+	self:setImage(self.image)
+    self.dialogue = dialogue
+    -- Remove sprite when dialogue is closed
+    local onClose = self.dialogue.onClose
+    function self.dialogue.onClose()
+        onClose()
+        self:remove()
+    end
+end
+
+function pdDialogueSprite:add()
+	pdDialogueSprite.super.add(self)
+	if not self.dialogue.enabled then
+		self.dialogue:enable()
+	end
+end
+
+function pdDialogueSprite:update()
+    pdDialogueSprite.super.update(self)
+    -- Redraw dialogue if it has changed (update returns true)
+	if self.dialogue:update() then
+		self.image:clear(gfx.kColorClear)
+		gfx.pushContext(self.image)
+			self.dialogue:draw(0, 0)
+		gfx.popContext()
+		self:markDirty()
+	end
 end
 
 ----------------------------------------------------------------------------
@@ -164,13 +208,13 @@ pdDialogueBox = {}
 class("pdDialogueBox").extends()
 
 function pdDialogueBox.buttonPrompt(x, y)
-    playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillBlack)
-    playdate.graphics.getSystemFont():drawText("Ⓐ", x, y)
+    gfx.setImageDrawMode(gfx.kDrawModeFillBlack)
+    gfx.getSystemFont():drawText("Ⓐ", x, y)
 end
 
 function pdDialogueBox.arrowPrompt(x, y, color)
-    playdate.graphics.setColor(color or playdate.graphics.kColorBlack)
-    playdate.graphics.fillTriangle(
+    gfx.setColor(color or gfx.kColorBlack)
+    gfx.fillTriangle(
         x, y,
         x + 5, y + 5,
         x + 10, y
@@ -199,6 +243,10 @@ function pdDialogueBox:init(text, width, height, padding, font)
     if text ~= nil then
         self:setText(text)
     end
+end
+
+function pdDialogueBox:asSprite()
+    return pdDialogueSprite(self)
 end
 
 function pdDialogueBox:getInputHandlers()
@@ -243,10 +291,10 @@ function pdDialogueBox:disable()
 end
 
 function pdDialogueBox:setText(text)
-    local font = self.font or playdate.graphics.getFont()
+    local font = self.font or gfx.getFont()
 
     if type(font) == "table" then
-        font = font[playdate.graphics.font.kVariantNormal]
+        font = font[gfx.font.kVariantNormal]
     end
     self.text = text
     self.pages = pdDialogue.process(text, self.width - self.padding, self.height - self.padding, font)
@@ -337,12 +385,14 @@ function pdDialogueBox:restartLine()
     self.currentChar = 1
     self.line_complete = false
     self.dialogue_complete = false
+    self.dirty = true
 end
 
 function pdDialogueBox:finishLine()
     self.currentChar = #self.pages[self.currentPage]
     self.line_complete = true
     self.dialogue_complete = self.currentPage == #self.pages
+    self.dirty = true
 end
 
 function pdDialogueBox:previousPage()
@@ -363,26 +413,26 @@ function pdDialogueBox:drawBackground(x, y)
     if self.nineSlice ~= nil then
         self.nineSlice:drawInRect(x, y, self.width, self.height)
     else
-        playdate.graphics.setColor(playdate.graphics.kColorWhite)
-        playdate.graphics.fillRect(x, y, self.width, self.height)
-        playdate.graphics.setColor(playdate.graphics.kColorBlack)
-        playdate.graphics.drawRect(x, y, self.width, self.height)
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(x, y, self.width, self.height)
+        gfx.setColor(gfx.kColorBlack)
+        gfx.drawRect(x, y, self.width, self.height)
     end
 end
 
 function pdDialogueBox:drawText(x, y, text)
-    playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillBlack)
+    gfx.setImageDrawMode(gfx.kDrawModeFillBlack)
     if self.font ~= nil then
         -- variable will be table if a font family
         if type(self.font) == "table" then
             -- Draw with font family
-            playdate.graphics.drawText(text, x, y, self.font)
+            gfx.drawText(text, x, y, self.font)
         else
             -- Draw using font
             self.font:drawText(text, x, y)
         end
     else
-        playdate.graphics.drawText(text, x, y)
+        gfx.drawText(text, x, y)
     end
 end
 
@@ -419,10 +469,18 @@ function pdDialogueBox:onClose()
 end
 
 function pdDialogueBox:update()
+    local dirty = self.dirty
+    self.dirty = false
+    if not self.enabled then
+        return dirty
+    end
     local pageLength = #self.pages[self.currentPage]
-    self.currentChar += self.speed
-    if self.currentChar > pageLength then
-        self.currentChar = pageLength
+    if self.currentChar < pageLength then
+        dirty = true
+        self.currentChar += self.speed
+        if self.currentChar > pageLength then
+            self.currentChar = pageLength
+        end
     end
 
     local previous_line_complete = self.line_complete
@@ -432,10 +490,14 @@ function pdDialogueBox:update()
 
     if previous_line_complete ~= self.line_complete then
         self:onPageComplete()
+        dirty = true
     end
     if previous_dialogue_complete ~= self.dialogue_complete then
         self:onDialogueComplete()
+        dirty = true
     end
+
+    return dirty
 end
 
 ----------------------------------------------------------------------------
@@ -534,7 +596,7 @@ function pdDialogue.DialogueBox:drawPrompt(x, y)
     end
 end
 function pdDialogue.DialogueBox:onOpen()
-    playdate.inputHandlers.push(self:getInputHandlers(), true)
+    pd.inputHandlers.push(self:getInputHandlers(), true)
     if pdDialogue.DialogueBox_Callbacks["onOpen"] ~= nil then
         pdDialogue.DialogueBox_Callbacks["onOpen"]()
     end
@@ -564,7 +626,7 @@ function pdDialogue.DialogueBox:onClose()
         pdDialogue.DialogueBox_Say_Nils = nil
     end
 
-    playdate.inputHandlers.pop()
+    pd.inputHandlers.pop()
     -- If the current wasn't nil, call it
     if current ~= nil then
         current()
