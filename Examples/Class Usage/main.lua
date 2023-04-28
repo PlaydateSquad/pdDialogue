@@ -41,9 +41,9 @@ Yeah.]]
 
 -- Create the box with the text and dimensions
 local dialogue = pdDialogueBox(text, width, height, padding)
--- Add input handlers from our class's default
+-- Add input handlers from the helper function
 playdate.inputHandlers.push(dialogue:getInputHandlers())
--- When the box closes, pop the handlers
+-- Override the function to pop the handlers When the box closes
 function dialogue:onClose()
     playdate.inputHandlers.pop()
 end
@@ -51,7 +51,7 @@ dialogue:enable()
 
 function playdate.update()
 	gfx.clear(gfx.kColorWhite)
-	-- You only want to draw the box when it's enabled
+	-- You only want to update the box when it's enabled
 	if dialogue.enabled then
 		dialogue:update()
 		dialogue:draw(x, y)
