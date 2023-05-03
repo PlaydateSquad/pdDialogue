@@ -1,4 +1,4 @@
-# pdDialogue
+# ![icon](icon.png) pdDialogue
 
 a Playdate dialogue system
 
