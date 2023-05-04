@@ -501,6 +501,50 @@ function pdDialogueBox:update()
 end
 
 ----------------------------------------------------------------------------
+-- #Section: pdPortraitDialogueBox
+----------------------------------------------------------------------------
+pdPortraitDialogueBox = {}
+class("pdPortraitDialogueBox").extends(pdDialogueBox)
+
+function pdPortraitDialogueBox:init(name, drawable, text, width, height, padding)
+    self.name = name
+    self.portrait = drawable
+    if self.portrait.getSize ~= nil then
+        self.portrait_width, self.portrait_height = self.portrait:getSize()
+    elseif self.portrait.getImage ~= nil then
+        self.portrait_width, self.portrait_height = self.portrait:getImage(1):getSize()
+    elseif self.portrait.image ~= nil then
+        if type(self.portrait.image) ~= "function" then
+            self.portrait_width, self.portrait_height = self.portrait.image:getSize()
+        else
+            self.portrait_width, self.portrait_height = self.portrait:image():getSize()
+        end
+    end
+	self:setAlignment(kTextAlignment.left)
+    pdDialogueBox.init(self, text, width - self.portrait_width, height, padding)
+end
+function pdPortraitDialogueBox:setAlignment(alignment)
+    self.alignment = alignment
+	self.portrait_x_position = self.alignment == kTextAlignment.left and 0 or self.width + self.portrait_width
+end
+function pdPortraitDialogueBox:getAlignment()
+    return self.alignment
+end
+function pdPortraitDialogueBox:draw(x, y)
+	local offset = self.alignment == kTextAlignment.left and self.portrait_width or 0
+    pdPortraitDialogueBox.super.draw(self, x + offset, y)
+end
+function pdPortraitDialogueBox:drawBackground(x, y)
+    pdPortraitDialogueBox.super.drawBackground(self, x, y)
+    self:drawPortrait(x + self.portrait_x_position, y)
+end
+function pdPortraitDialogueBox:drawPortrait(x, y)
+    local font = self.font or gfx.getFont()
+    self.portrait:draw(x - self.portrait_width, y)
+    font:drawTextAligned(self.name, x - self.portrait_width / 2, y + self.height - font:getHeight(), kTextAlignment.center)
+end
+
+----------------------------------------------------------------------------
 -- #Section: dialogue box used in pdDialogue
 ----------------------------------------------------------------------------
 pdDialogue.DialogueBox_x,  pdDialogue.DialogueBox_y = 5, 186
