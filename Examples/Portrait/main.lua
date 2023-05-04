@@ -12,7 +12,14 @@ local width, height, padding = 390, 50, 8
 local x, y = 5, 170
 local text = [[Dialogue... *it's pretty rad!*]]
 
+-- Create the portrait box with the name, portrait, and inherited init parameters
 local dialogue = pdPortraitDialogueBox("pd", portrait, text, width, height, padding)
+-- If it's an animated sprite, you should restart the animation whenever the page changes
+function dialogue:nextPage()
+    pdPortraitDialogueBox.super.nextPage(self)
+    portrait.shouldLoop = true
+end
+-- You also have to tell the animation to stop when the page is done
 function dialogue:onPageComplete()
     portrait.shouldLoop = false
     portrait.frame = 1
@@ -24,6 +31,7 @@ function dialogue:onClose()
     playdate.inputHandlers.pop()
 end
 
+-- Add the box as a sprite because it's easier
 local dialogueSprite = dialogue:asSprite()
 dialogueSprite.image = gfx.image.new(width, height)
 dialogueSprite:setImage(dialogueSprite.image)
