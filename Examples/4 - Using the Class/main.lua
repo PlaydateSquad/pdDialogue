@@ -1,7 +1,7 @@
 import "CoreLibs/object"
 import "CoreLibs/graphics"
 
-import "pdDialogue"
+import "Examples/5- Portraitt/pdDialogue"
 
 local gfx <const> = playdate.graphics
 
