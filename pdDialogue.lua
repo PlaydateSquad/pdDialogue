@@ -446,7 +446,7 @@ function pdDialogueBox:draw(x, y)
         currentText = currentText:sub(1, math.floor(self.currentChar))
     end
     self:drawBackground(x, y)
-    self:drawText(x + self.padding // 2, y + self.padding // 2, currentText)
+    self:drawText(x + self.padding, y + self.padding, currentText)
     if self.line_complete then
         self:drawPrompt(x, y)
     end
@@ -498,6 +498,68 @@ function pdDialogueBox:update()
     end
 
     return dirty
+end
+
+----------------------------------------------------------------------------
+-- #Section: pdPortraitDialogueBox
+----------------------------------------------------------------------------
+pdPortraitDialogueBox = {}
+class("pdPortraitDialogueBox").extends(pdDialogueBox)
+
+function pdPortraitDialogueBox:init(name, drawable, text, width, height, padding)
+    self.name = name
+    self.portrait = drawable
+    if self.portrait.getSize ~= nil then
+        self.portrait_width, self.portrait_height = self.portrait:getSize()
+    elseif self.portrait.getImage ~= nil then
+        self.portrait_width, self.portrait_height = self.portrait:getImage(1):getSize()
+    elseif self.portrait.image ~= nil then
+        if type(self.portrait.image) ~= "function" then
+            self.portrait_width, self.portrait_height = self.portrait.image:getSize()
+        else
+            self.portrait_width, self.portrait_height = self.portrait:image():getSize()
+        end
+    end
+    pdDialogueBox.init(self, text, width - self.portrait_width, height, padding)
+	self:setAlignment(kTextAlignment.left)
+end
+function pdPortraitDialogueBox:setAlignment(alignment)
+    self.alignment = alignment
+    if self.alignment == kTextAlignment.left then
+        self.portrait_x_position = 0
+    else
+        self.portrait_x_position = self.width
+    end
+end
+function pdPortraitDialogueBox:getAlignment()
+    return self.alignment
+end
+function pdPortraitDialogueBox:draw(x, y)
+	local offset = self.alignment == kTextAlignment.left and self.portrait_width or 0
+    pdPortraitDialogueBox.super.draw(self, x + offset, y)
+end
+function pdPortraitDialogueBox:drawBackground(x, y)
+    pdPortraitDialogueBox.super.drawBackground(self, x, y)
+    self:drawPortrait(x + self.portrait_x_position - self.portrait_width, y)
+end
+function pdPortraitDialogueBox:drawPortrait(x, y)
+    if self.nineSlice ~= nil then
+        self.nineSlice:drawInRect(x, y, self.portrait_width, self.portrait_height)
+    else
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(x, y, self.portrait_width, self.portrait_height)
+        gfx.setColor(gfx.kColorBlack)
+        gfx.drawRect(x, y, self.portrait_width, self.height)
+    end
+
+    local font = self.font or gfx.getFont()
+    self.portrait:draw(x, y)
+    font:drawTextAligned(
+        self.name,
+        x + self.portrait_width / 2,
+        y + self.height - font:getHeight() - self.padding,
+        kTextAlignment.center
+    )
 end
 
 ----------------------------------------------------------------------------

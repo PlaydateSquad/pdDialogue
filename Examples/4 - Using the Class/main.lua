@@ -1,11 +1,11 @@
 import "CoreLibs/object"
 import "CoreLibs/graphics"
 
-import "pdDialogue"
+import "Examples/5- Portraitt/pdDialogue"
 
 local gfx <const> = playdate.graphics
 
-local width, height, padding = 390, 48, 8
+local width, height, padding = 390, 48, 4
 local x, y = 5, 186
 local text = [[Hey.
 
