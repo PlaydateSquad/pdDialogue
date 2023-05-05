@@ -8,8 +8,8 @@ import "pdDialogue"
 local gfx <const> = playdate.graphics
 
 local portrait = gfx.animation.loop.new(150, gfx.imagetable.new("assets/portrait"), true)
-local width, height, padding = 390, 50, 8
-local x, y = 5, 170
+local width, height, padding = 390, 50, 2
+local x, y = 6, 180
 local text = [[Dialogue... *it's pretty rad!*]]
 
 -- Create the portrait box with the name, portrait, and inherited init parameters
