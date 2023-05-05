@@ -5,7 +5,7 @@ import "pdDialogue"
 
 local gfx <const> = playdate.graphics
 
-local width, height, padding = 390, 48, 8
+local width, height, padding = 390, 48, 4
 local x, y = 5, 186
 local text = [[Hey.
 
