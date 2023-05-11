@@ -524,6 +524,7 @@ function pdPortraitDialogueBox:init(name, drawable, text, width, height, font)
     pdDialogueBox.init(self, text, width - self.portrait_width, height, font)
 	self:setAlignment(kTextAlignment.left)
 end
+
 function pdPortraitDialogueBox:setAlignment(alignment)
     self.alignment = alignment
     if self.alignment == kTextAlignment.left then
@@ -532,17 +533,21 @@ function pdPortraitDialogueBox:setAlignment(alignment)
         self.portrait_x_position = self.width
     end
 end
+
 function pdPortraitDialogueBox:getAlignment()
     return self.alignment
 end
+
 function pdPortraitDialogueBox:draw(x, y)
 	local offset = self.alignment == kTextAlignment.left and self.portrait_width or 0
     pdPortraitDialogueBox.super.draw(self, x + offset, y)
 end
+
 function pdPortraitDialogueBox:drawBackground(x, y)
     pdPortraitDialogueBox.super.drawBackground(self, x, y)
     self:drawPortrait(x + self.portrait_x_position - self.portrait_width, y)
 end
+
 function pdPortraitDialogueBox:drawPortrait(x, y)
     if self.nineSlice ~= nil then
         self.nineSlice:drawInRect(x, y, self.portrait_width, self.portrait_height)
