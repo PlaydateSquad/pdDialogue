@@ -8,12 +8,12 @@ import "pdDialogue"
 local gfx <const> = playdate.graphics
 
 local portrait = gfx.animation.loop.new(150, gfx.imagetable.new("assets/portrait"), true)
-local width, height, padding = 390, 50, 2
+local width, height = 390, 50
 local x, y = 6, 180
 local text = [[Dialogue... *it's pretty rad!*]]
 
 -- Create the portrait box with the name, portrait, and inherited init parameters
-local dialogue = pdPortraitDialogueBox("pd", portrait, text, width, height, padding)
+local dialogue = pdPortraitDialogueBox("pd", portrait, text, width, height)
 -- If it's an animated sprite, you should restart the animation whenever the page changes
 function dialogue:nextPage()
     pdPortraitDialogueBox.super.nextPage(self)
