@@ -6,11 +6,19 @@ a Playdate dialogue system
 
 ## Installation
 
+[![Toybox Compatible](https://img.shields.io/badge/toybox.py-compatible-brightgreen)](https://toyboxpy.io)
+
 To install, copy the `pdDialogue.lua` file into your project and import it with `import "path/to/pdDialogue"`. Alternatively, you can use [toybox.py](https://didier.malenfant.net/toybox.py/):
 
 ```bash
 toybox add https://github.com/PizzaFuel/pdDialogue
 toybox update
+```
+
+Then import your toyboxes in your `source/main.lua` file:
+
+```lua
+import "../toyboxes/toyboxes.lua"
 ```
 
 ## Getting Started
