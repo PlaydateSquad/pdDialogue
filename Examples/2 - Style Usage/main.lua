@@ -49,6 +49,7 @@ He is annoying]], {
             height=30,
             x=0,
             y=214,
+            padding=4,
             font=font2,
             drawText=function(_, x, y, text)
                 playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillWhite)
@@ -67,26 +68,24 @@ He is annoying]], {
     downButtonUp = function()
         directionText = "⬇️"
         switch:setImageFlip(gfx.kImageFlippedX)
-        pdDialogue.say("You just flipped the switch", {
-            width=134,
-            height=24,
+        -- A custom config for the dialogue box
+        local config = {
+            width=156,
+            height=28,
             x=130,
+            padding=4,
             font = font3,
             nineSlice=nineslice_1,
-            drawPrompt=function() end,
-            onClose=function()
-                directionText = "✛"
-                switch:setImageFlip(gfx.kImageUnflipped)
-                pdDialogue.say("But it flipped back flip flip", {
-                    width=134,
-                    height=24,
-                    x=130,
-                    font = font3,
-                    nineSlice=nineslice_1,
-                    drawPrompt=function() end
-                })
-            end
-        })
+            drawPrompt=function() end
+        }
+        -- Add an onClose callback
+        local _config = table.shallowcopy(config)
+        _config["onClose"] = function()
+            directionText = "✛"
+            switch:setImageFlip(gfx.kImageUnflipped)
+            pdDialogue.say("But it flipped back flip flip", config)
+        end
+        pdDialogue.say("You just flipped the switch", _config)
     end,
     -- Left pushed:
     leftButtonUp = function()
@@ -95,7 +94,8 @@ He is annoying]], {
 
 *Broom* service! _Nyuck_ _nyuck_ _nyuck_]], {
             font=sasser_slab_family,
-            nineSlice=nineslice_2
+            nineSlice=nineslice_2,
+            padding=4
         })
     end,
 })

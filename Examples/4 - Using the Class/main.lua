@@ -5,7 +5,7 @@ import "pdDialogue"
 
 local gfx <const> = playdate.graphics
 
-local width, height, padding = 390, 48, 8
+local width, height= 390, 48
 local x, y = 5, 186
 local text = [[Hey.
 
@@ -40,7 +40,7 @@ You sure?
 Yeah.]]
 
 -- Create the box with the text and dimensions
-local dialogue = pdDialogueBox(text, width, height, padding)
+local dialogue = pdDialogueBox(text, width, height)
 -- Add input handlers from the helper function
 playdate.inputHandlers.push(dialogue:getInputHandlers())
 -- Override the function to pop the handlers When the box closes
