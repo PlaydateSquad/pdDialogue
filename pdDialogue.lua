@@ -271,9 +271,6 @@ function pdDialogueBox:getInputHandlers()
             else
                 self:finishLine()
             end
-        end,
-        BButtonUp = function()
-            self:setSpeed(0.5)
         end
     }
 end
