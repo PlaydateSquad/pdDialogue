@@ -409,6 +409,7 @@ end
 
 function pdDialogueBox:drawBackground(x, y)
     if self.nineSlice ~= nil then
+        gfx.setImageDrawMode(gfx.kDrawModeCopy)
         self.nineSlice:drawInRect(x, y, self.width, self.height)
     else
         gfx.setColor(gfx.kColorWhite)
