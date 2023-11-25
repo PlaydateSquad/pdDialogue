@@ -420,7 +420,7 @@ function pdDialogueBox:drawBackground(x, y)
 end
 
 function pdDialogueBox:drawText(x, y, text)
-    gfx.setImageDrawMode(gfx.kDrawModeFillBlack)
+    gfx.setImageDrawMode(gfx.kDrawModeInverted)
     if self.font ~= nil then
         -- variable will be table if a font family
         if type(self.font) == "table" then
