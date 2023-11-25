@@ -207,7 +207,7 @@ pdDialogueBox = {}
 class("pdDialogueBox").extends()
 
 function pdDialogueBox.buttonPrompt(x, y)
-    gfx.setImageDrawMode(gfx.kDrawModeFillBlack)
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
     gfx.getSystemFont():drawText("Ⓐ", x, y)
 end
 
