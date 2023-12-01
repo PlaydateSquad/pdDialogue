@@ -207,7 +207,7 @@ pdDialogueBox = {}
 class("pdDialogueBox").extends()
 
 function pdDialogueBox.buttonPrompt(x, y)
-    gfx.setImageDrawMode(gfx.kDrawModeFillBlack)
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
     gfx.getSystemFont():drawText("Ⓐ", x, y)
 end
 
@@ -420,7 +420,7 @@ function pdDialogueBox:drawBackground(x, y)
 end
 
 function pdDialogueBox:drawText(x, y, text)
-    gfx.setImageDrawMode(gfx.kDrawModeFillBlack)
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
     if self.font ~= nil then
         -- variable will be table if a font family
         if type(self.font) == "table" then
