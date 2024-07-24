@@ -404,6 +404,7 @@ function pdDialogueBox:nextPage()
     if self.currentPage + 1 <= #self.pages then
         self.currentPage += 1
         self:restartLine()
+        self:onNextPage()
     end
 end
 
@@ -456,6 +457,10 @@ function pdDialogueBox:onOpen()
 end
 
 function pdDialogueBox:onPageComplete()
+    -- Overrideable by user
+end
+
+function pdDialogueBox:onNextPage()
     -- Overrideable by user
 end
 
@@ -631,6 +636,10 @@ pdDialogue.DialogueBox_KeyValueMap = {
         set=function(func) pdDialogue.DialogueBox_Callbacks["onPageComplete"] = func end,
         get=function() return pdDialogue.DialogueBox_Callbacks["onPageComplete"] end
     },
+    onNextPage={
+        set=function(func) pdDialogue.DialogueBox_Callbacks["onNextPage"] = func end,
+        get=function() return pdDialogue.DialogueBox_Callbacks["onNextPage"] end
+    },
     onDialogueComplete={
         set=function(func) pdDialogue.DialogueBox_Callbacks["onDialogueComplete"] = func end,
         get=function() return pdDialogue.DialogueBox_Callbacks["onDialogueComplete"] end
@@ -670,6 +679,11 @@ end
 function pdDialogue.DialogueBox:onPageComplete()
     if pdDialogue.DialogueBox_Callbacks["onPageComplete"] ~= nil then
         pdDialogue.DialogueBox_Callbacks["onPageComplete"]()
+    end
+end
+function pdDialogue.DialogueBox:onNextPage()
+    if pdDialogue.DialogueBox_Callbacks["onNextPage"] ~= nil then
+        pdDialogue.DialogueBox_Callbacks["onNextPage"]()
     end
 end
 function pdDialogue.DialogueBox:onDialogueComplete()
