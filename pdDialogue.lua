@@ -248,9 +248,10 @@ function pdDialogueBox:asSprite()
 end
 
 function pdDialogueBox:getInputHandlers()
+    local _speed = self:getSpeed()
     return {
         AButtonDown = function()
-            self:setSpeed(2)
+            self:setSpeed(_speed * 2)
             if self.dialogue_complete then
                 self:disable()
             elseif self.line_complete then
@@ -258,7 +259,7 @@ function pdDialogueBox:getInputHandlers()
             end
         end,
         AButtonUp = function()
-            self:setSpeed(0.5)
+            self:setSpeed(_speed)
         end,
         BButtonDown = function()
             if self.line_complete then
