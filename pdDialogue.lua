@@ -251,11 +251,12 @@ function pdDialogueBox:getInputHandlers()
     local _speed = self:getSpeed()
     return {
         AButtonDown = function()
-            self:setSpeed(_speed * 2)
             if self.dialogue_complete then
                 self:disable()
             elseif self.line_complete then
                 self:nextPage()
+            else
+                self:setSpeed(_speed * 2)
             end
         end,
         AButtonUp = function()
@@ -652,21 +653,21 @@ pdDialogue.DialogueBox_KeyValueMap = {
 }
 function pdDialogue.DialogueBox:drawBackground(x, y)
     if pdDialogue.DialogueBox_Callbacks["drawBackground"] ~= nil then
-        pdDialogue.DialogueBox_Callbacks["drawBackground"](dialogue, x, y)
+        pdDialogue.DialogueBox_Callbacks["drawBackground"](self, x, y)
     else
         pdDialogue.DialogueBox.super.drawBackground(self, x, y)
     end
 end
 function pdDialogue.DialogueBox:drawText(x, y ,text)
     if pdDialogue.DialogueBox_Callbacks["drawText"] ~= nil then
-        pdDialogue.DialogueBox_Callbacks["drawText"](dialogue, x, y, text)
+        pdDialogue.DialogueBox_Callbacks["drawText"](self, x, y, text)
     else
         pdDialogue.DialogueBox.super.drawText(self, x, y, text)
     end
 end
 function pdDialogue.DialogueBox:drawPrompt(x, y)
     if pdDialogue.DialogueBox_Callbacks["drawPrompt"] ~= nil then
-        pdDialogue.DialogueBox_Callbacks["drawPrompt"](dialogue, x, y)
+        pdDialogue.DialogueBox_Callbacks["drawPrompt"](self, x, y)
     else
         pdDialogue.DialogueBox.super.drawPrompt(self, x, y)
     end
