@@ -65,12 +65,12 @@ function pdDialogue.window(text, startIndex, height, font)
     ]]--
     font = font or gfx.getFont()
 
-    local result = {text[start_index]}
+    local result = {text[startIndex]}
     local rows = pdDialogue.getRows(height, font) - 1
 
     for index = 1, rows do
         -- Check if index is out of range of the text
-        if start_index + index > #text then
+        if startIndex + index > #text then
             break
         end
 
